@@ -1,0 +1,1 @@
+ALTER TABLE `products` ADD `tracked` integer DEFAULT false NOT NULL;

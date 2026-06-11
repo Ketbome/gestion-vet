@@ -1,0 +1,23 @@
+services:
+  gestionvet:
+    build: .
+    container_name: gestionvet
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      # Todo se lee en RUNTIME: puedes cambiar valores y solo reiniciar
+      # el contenedor, sin rebuildear la imagen.
+      AUTH_USER: ${AUTH_USER:-admin}
+      AUTH_PASSWORD: ${AUTH_PASSWORD:?Define AUTH_PASSWORD en un archivo .env}
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en un archivo .env}
+      AUTH_SESSION_DAYS: ${AUTH_SESSION_DAYS:-30}
+      CURRENCY_LOCALE: ${CURRENCY_LOCALE:-es-CL}
+      CURRENCY: ${CURRENCY:-CLP}
+      DATABASE_PATH: /app/data/gestionvet.db
+    volumes:
+      # La base SQLite vive fuera del contenedor: sobrevive updates
+      - gestionvet-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  gestionvet-data:
