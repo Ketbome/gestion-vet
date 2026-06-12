@@ -12,6 +12,7 @@ import {
   services,
 } from "@/lib/db";
 import { verifySession } from "@/lib/auth";
+import { computeDiscount, parseDiscountType } from "@/lib/discount";
 
 export type ActionState = { error?: string };
 
@@ -82,7 +83,7 @@ export async function createAttention(
   const servicePrice = new Map(serviceRows.map((s) => [s.id, s.price]));
   const productInfo = new Map(productRows.map((p) => [p.id, p]));
 
-  const total =
+  const subtotal =
     items.services.reduce(
       (sum, s) => sum + s.quantity * (servicePrice.get(s.serviceId) ?? 0),
       0
@@ -91,12 +92,18 @@ export async function createAttention(
       (sum, p) => sum + p.quantity * (productInfo.get(p.productId)?.salePrice ?? 0),
       0
     );
+  const discount = computeDiscount(
+    subtotal,
+    parseDiscountType(formData.get("discountType")),
+    Number(formData.get("discountValue") ?? 0)
+  );
+  const total = subtotal - discount;
 
   try {
     db.transaction((tx) => {
       const attention = tx
         .insert(attentions)
-        .values({ petName, ownerName, date, notes, total })
+        .values({ petName, ownerName, date, notes, discount, total })
         .returning()
         .get();
 

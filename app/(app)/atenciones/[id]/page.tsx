@@ -95,11 +95,29 @@ export default async function AtencionPage({
           </Card>
         )}
 
-        <Card className="flex items-center justify-between p-5">
-          <span className="font-semibold text-gray-700">Total</span>
-          <span className="text-2xl font-bold text-primary-700 tabular-nums">
-            {formatCurrency(attention.total)}
-          </span>
+        <Card className="space-y-1.5 p-5">
+          {attention.discount > 0 && (
+            <>
+              <div className="flex items-center justify-between text-sm text-gray-500">
+                <span>Subtotal</span>
+                <span className="tabular-nums">
+                  {formatCurrency(attention.total + attention.discount)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Descuento</span>
+                <span className="font-medium text-red-600 tabular-nums">
+                  −{formatCurrency(attention.discount)}
+                </span>
+              </div>
+            </>
+          )}
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-gray-700">Total</span>
+            <span className="text-2xl font-bold text-primary-700 tabular-nums">
+              {formatCurrency(attention.total)}
+            </span>
+          </div>
         </Card>
       </div>
     </>

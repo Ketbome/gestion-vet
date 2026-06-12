@@ -38,6 +38,8 @@ export const attentions = sqliteTable("attentions", {
   ownerName: text("owner_name").notNull(),
   date: text("date").notNull(),
   notes: text("notes"),
+  // Descuento ya aplicado, en pesos: total = suma de líneas - discount
+  discount: integer("discount").notNull().default(0),
   total: integer("total").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
@@ -73,6 +75,8 @@ export const orders = sqliteTable("orders", {
   supplier: text("supplier").notNull().default(""),
   status: text("status").notNull().default("pedido"),
   notes: text("notes"),
+  // Descuento ya aplicado, en pesos: totalCost = suma de ítems - discount
+  discount: integer("discount").notNull().default(0),
   totalCost: integer("total_cost").notNull().default(0),
   createdAt: text("created_at")
     .notNull()

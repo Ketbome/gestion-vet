@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { formatCurrency } from "@/lib/currency";
+import { computeDiscount, type DiscountType } from "@/lib/discount";
 import type { ActionState } from "@/lib/actions/attentions";
 import {
   Input,
@@ -12,6 +13,8 @@ import {
 } from "@/components/ui/form-fields";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Card } from "@/components/ui/card";
+import { NumberField } from "@/components/ui/number-field";
+import { DiscountField } from "@/components/ui/discount-field";
 import {
   ProductCombobox,
   type ComboboxProduct,
@@ -36,10 +39,14 @@ export function AttentionForm({
   const [state, formAction] = useActionState<ActionState, FormData>(action, {});
   const [serviceLines, setServiceLines] = useState<ServiceLine[]>([]);
   const [productLines, setProductLines] = useState<ProductLine[]>([]);
+  const [discountType, setDiscountType] = useState<DiscountType>("amount");
+  const [discountValue, setDiscountValue] = useState(0);
 
-  const total =
+  const subtotal =
     serviceLines.reduce((sum, l) => sum + l.price * l.quantity, 0) +
     productLines.reduce((sum, l) => sum + l.price * l.quantity, 0);
+  const discount = computeDiscount(subtotal, discountType, discountValue);
+  const total = subtotal - discount;
 
   const itemsJson = JSON.stringify({
     services: serviceLines.map((l) => ({ serviceId: l.serviceId, quantity: l.quantity })),
@@ -170,11 +177,26 @@ export function AttentionForm({
         />
       </Card>
 
-      <Card className="flex items-center justify-between p-5">
-        <span className="font-semibold text-gray-700">Total</span>
-        <span className="text-2xl font-bold text-primary-700 tabular-nums">
-          {formatCurrency(total)}
-        </span>
+      <Card className="space-y-3 p-5">
+        <DiscountField
+          subtotal={subtotal}
+          type={discountType}
+          value={discountValue}
+          onTypeChange={setDiscountType}
+          onValueChange={setDiscountValue}
+        />
+        {discount > 0 && (
+          <div className="flex items-center justify-between text-sm text-gray-500">
+            <span>Subtotal</span>
+            <span className="tabular-nums">{formatCurrency(subtotal)}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between border-t border-gray-100 pt-3">
+          <span className="font-semibold text-gray-700">Total</span>
+          <span className="text-2xl font-bold text-primary-700 tabular-nums">
+            {formatCurrency(total)}
+          </span>
+        </div>
       </Card>
 
       <input type="hidden" name="items" value={itemsJson} />
@@ -213,16 +235,11 @@ function LineList({
             </p>
             {l.warning && <p className="text-xs text-amber-600">{l.warning}</p>}
           </div>
-          <input
-            type="number"
+          <NumberField
             min={1}
-            step={1}
-            inputMode="numeric"
             value={l.quantity}
             aria-label={`Cantidad de ${l.name}`}
-            onChange={(e) =>
-              onQuantity(l.key, Math.max(1, Math.round(Number(e.target.value) || 1)))
-            }
+            onValue={(quantity) => onQuantity(l.key, quantity)}
             className="w-16 rounded-lg border border-gray-300 px-2 py-1.5 text-center text-sm tabular-nums focus:border-primary-500 focus:outline-none"
           />
           <span className="w-20 text-right text-sm font-semibold text-gray-900 tabular-nums">

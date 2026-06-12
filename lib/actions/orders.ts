@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db, expenses, orderItems, orders, products } from "@/lib/db";
 import { verifySession } from "@/lib/auth";
+import { computeDiscount, parseDiscountType } from "@/lib/discount";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { today } from "@/lib/dates";
 
@@ -61,16 +62,22 @@ export async function createOrder(
   if (!supplier) return { error: "El proveedor es obligatorio" };
   if (!items) return { error: "Agrega al menos un producto al pedido" };
 
-  const totalCost = items.reduce(
+  const subtotal = items.reduce(
     (sum, item) => sum + Math.round(item.unitCost) * item.quantity,
     0
   );
+  const discount = computeDiscount(
+    subtotal,
+    parseDiscountType(formData.get("discountType")),
+    Number(formData.get("discountValue") ?? 0)
+  );
+  const totalCost = subtotal - discount;
 
   let orderId = 0;
   db.transaction((tx) => {
     const order = tx
       .insert(orders)
-      .values({ supplier, notes, totalCost })
+      .values({ supplier, notes, discount, totalCost })
       .returning()
       .get();
     orderId = order.id;

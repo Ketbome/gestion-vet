@@ -77,11 +77,29 @@ export default async function PedidoPage({
               </li>
             ))}
           </ul>
-          <div className="mt-3 flex items-center justify-between border-t border-gray-200 pt-3">
-            <span className="font-semibold text-gray-700">Costo total</span>
-            <span className="text-xl font-bold text-gray-900 tabular-nums">
-              {formatCurrency(order.totalCost)}
-            </span>
+          <div className="mt-3 space-y-1.5 border-t border-gray-200 pt-3">
+            {order.discount > 0 && (
+              <>
+                <div className="flex items-center justify-between text-sm text-gray-500">
+                  <span>Subtotal</span>
+                  <span className="tabular-nums">
+                    {formatCurrency(order.totalCost + order.discount)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">Descuento</span>
+                  <span className="font-medium text-red-600 tabular-nums">
+                    −{formatCurrency(order.discount)}
+                  </span>
+                </div>
+              </>
+            )}
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-gray-700">Costo total</span>
+              <span className="text-xl font-bold text-gray-900 tabular-nums">
+                {formatCurrency(order.totalCost)}
+              </span>
+            </div>
           </div>
         </Card>
 

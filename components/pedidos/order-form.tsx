@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { formatCurrency } from "@/lib/currency";
+import { computeDiscount, type DiscountType } from "@/lib/discount";
 import type { ActionState } from "@/lib/actions/orders";
 import {
   PRODUCT_CATEGORIES,
@@ -16,6 +17,8 @@ import {
 } from "@/components/ui/form-fields";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Card } from "@/components/ui/card";
+import { NumberField } from "@/components/ui/number-field";
+import { DiscountField } from "@/components/ui/discount-field";
 import {
   ProductCombobox,
   type ComboboxProduct,
@@ -44,8 +47,12 @@ export function OrderForm({
   const [newCategory, setNewCategory] = useState("medicamento");
   const [newCost, setNewCost] = useState("");
   const [newSalePrice, setNewSalePrice] = useState("");
+  const [discountType, setDiscountType] = useState<DiscountType>("amount");
+  const [discountValue, setDiscountValue] = useState(0);
 
-  const totalCost = lines.reduce((sum, l) => sum + l.unitCost * l.quantity, 0);
+  const subtotal = lines.reduce((sum, l) => sum + l.unitCost * l.quantity, 0);
+  const discount = computeDiscount(subtotal, discountType, discountValue);
+  const totalCost = subtotal - discount;
 
   const itemsJson = JSON.stringify(
     lines.map((l) =>
@@ -194,66 +201,73 @@ export function OrderForm({
         ) : (
           <ul className="divide-y divide-gray-100">
             {lines.map((l) => (
-              <li key={l.key} className="flex items-center gap-2 py-2">
-                <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-900">
-                  {l.name}
-                </p>
-                <div className="flex items-center gap-1 text-xs text-gray-500">
-                  <span>Cant.</span>
-                  <input
-                    type="number"
-                    min={1}
-                    step={1}
-                    inputMode="numeric"
-                    value={l.quantity}
-                    aria-label={`Cantidad de ${l.name}`}
-                    onChange={(e) =>
-                      updateLine(l.key, {
-                        quantity: Math.max(1, Math.round(Number(e.target.value) || 1)),
-                      })
+              <li key={l.key} className="space-y-2 py-2.5">
+                <div className="flex items-center gap-2">
+                  <p className="min-w-0 flex-1 text-sm font-medium text-gray-900">
+                    {l.name}
+                  </p>
+                  <span className="shrink-0 text-sm font-semibold text-gray-900 tabular-nums">
+                    {formatCurrency(l.unitCost * l.quantity)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setLines((prev) => prev.filter((x) => x.key !== l.key))
                     }
-                    className="w-14 rounded-lg border border-gray-300 px-1.5 py-1.5 text-center text-sm tabular-nums focus:border-primary-500 focus:outline-none"
-                  />
+                    aria-label={`Quitar ${l.name}`}
+                    className="shrink-0 rounded-lg px-2 py-1 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <div className="flex items-center gap-1 text-xs text-gray-500">
-                  <span>Costo</span>
-                  <input
-                    type="number"
-                    min={0}
-                    step={1}
-                    inputMode="numeric"
-                    value={l.unitCost}
-                    aria-label={`Costo unitario de ${l.name}`}
-                    onChange={(e) =>
-                      updateLine(l.key, {
-                        unitCost: Math.max(0, Math.round(Number(e.target.value) || 0)),
-                      })
-                    }
-                    className="w-20 rounded-lg border border-gray-300 px-1.5 py-1.5 text-right text-sm tabular-nums focus:border-primary-500 focus:outline-none"
-                  />
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <label className="flex items-center gap-1.5 text-xs text-gray-500">
+                    Cant.
+                    <NumberField
+                      min={1}
+                      value={l.quantity}
+                      aria-label={`Cantidad de ${l.name}`}
+                      onValue={(quantity) => updateLine(l.key, { quantity })}
+                      className="w-16 rounded-lg border border-gray-300 px-1.5 py-1.5 text-center text-sm tabular-nums focus:border-primary-500 focus:outline-none"
+                    />
+                  </label>
+                  <label className="flex items-center gap-1.5 text-xs text-gray-500">
+                    Costo
+                    <NumberField
+                      min={0}
+                      value={l.unitCost}
+                      aria-label={`Costo unitario de ${l.name}`}
+                      onValue={(unitCost) => updateLine(l.key, { unitCost })}
+                      className="w-24 rounded-lg border border-gray-300 px-1.5 py-1.5 text-right text-sm tabular-nums focus:border-primary-500 focus:outline-none"
+                    />
+                  </label>
                 </div>
-                <span className="w-20 text-right text-sm font-semibold text-gray-900 tabular-nums">
-                  {formatCurrency(l.unitCost * l.quantity)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setLines((prev) => prev.filter((x) => x.key !== l.key))}
-                  aria-label={`Quitar ${l.name}`}
-                  className="rounded-lg px-2 py-1 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
-                >
-                  ✕
-                </button>
               </li>
             ))}
           </ul>
         )}
       </Card>
 
-      <Card className="flex items-center justify-between p-5">
-        <span className="font-semibold text-gray-700">Costo total</span>
-        <span className="text-2xl font-bold text-gray-900 tabular-nums">
-          {formatCurrency(totalCost)}
-        </span>
+      <Card className="space-y-3 p-5">
+        <DiscountField
+          subtotal={subtotal}
+          type={discountType}
+          value={discountValue}
+          onTypeChange={setDiscountType}
+          onValueChange={setDiscountValue}
+        />
+        {discount > 0 && (
+          <div className="flex items-center justify-between text-sm text-gray-500">
+            <span>Subtotal</span>
+            <span className="tabular-nums">{formatCurrency(subtotal)}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between border-t border-gray-100 pt-3">
+          <span className="font-semibold text-gray-700">Costo total</span>
+          <span className="text-2xl font-bold text-gray-900 tabular-nums">
+            {formatCurrency(totalCost)}
+          </span>
+        </div>
       </Card>
 
       <input type="hidden" name="items" value={itemsJson} />
