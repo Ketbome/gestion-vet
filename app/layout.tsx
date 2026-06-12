@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { RegisterServiceWorker } from "@/components/pwa/register-service-worker";
 import { getCurrencyConfig } from "@/lib/currency";
 import "./globals.css";
 
@@ -14,11 +15,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  applicationName: "GestionVet",
   title: {
     default: "GestionVet",
     template: "%s · GestionVet",
   },
   description: "Gestión de veterinaria: inventario, atenciones, pedidos y finanzas",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "GestionVet",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export const viewport: Viewport = {
@@ -46,6 +57,7 @@ export default function RootLayout({
           }}
         />
         {children}
+        <RegisterServiceWorker />
       </body>
     </html>
   );
