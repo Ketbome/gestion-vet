@@ -84,9 +84,12 @@ export default async function MascotaPage({
         subtitle={facts.join(" · ")}
         action={
           <div className="flex items-center gap-2">
-            <ButtonLink href={`/mascotas/${pet.id}/carnet`} variant="secondary">
-              Carnet
-            </ButtonLink>
+            <a
+              href={`/mascotas/${pet.id}/carnet/pdf`}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            >
+              Carnet PDF
+            </a>
             <ButtonLink href={`/mascotas/${pet.id}/editar`} variant="secondary">
               Editar
             </ButtonLink>
@@ -200,12 +203,12 @@ export default async function MascotaPage({
                   className="flex items-center justify-between gap-2 py-2 text-sm"
                 >
                   <span className="text-gray-700">Receta {formatDate(r.date)}</span>
-                  <Link
-                    href={`/recetas/${r.id}`}
+                  <a
+                    href={`/recetas/${r.id}/pdf`}
                     className="font-medium text-primary-600 hover:underline"
                   >
-                    Imprimir
-                  </Link>
+                    Descargar PDF
+                  </a>
                 </li>
               ))}
             </ul>

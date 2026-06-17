@@ -228,12 +228,12 @@ export default async function AtencionPage({
                 + Nueva receta
               </ButtonLink>
             </div>
-            <Link
-              href={`/atenciones/${attention.id}/certificado`}
+            <a
+              href={`/atenciones/${attention.id}/certificado/pdf`}
               className="inline-block text-sm font-medium text-primary-600 hover:underline"
             >
-              Imprimir certificado de salud →
-            </Link>
+              Descargar certificado de salud (PDF) →
+            </a>
             {prescriptionList.length === 0 ? (
               <p className="text-sm text-gray-400">Sin recetas emitidas.</p>
             ) : (
@@ -248,12 +248,12 @@ export default async function AtencionPage({
                       <span className="text-gray-400"> · {p.count} medicamento{p.count === 1 ? "" : "s"}</span>
                     </span>
                     <span className="flex items-center gap-2">
-                      <Link
-                        href={`/recetas/${p.id}`}
+                      <a
+                        href={`/recetas/${p.id}/pdf`}
                         className="font-medium text-primary-600 hover:underline"
                       >
-                        Imprimir
-                      </Link>
+                        Descargar PDF
+                      </a>
                       <DeleteButton
                         action={deletePrescription.bind(null, p.id)}
                         confirmTitle="¿Eliminar receta?"

@@ -18,7 +18,7 @@ Desde **Configuración** eliges cómo opera la app (cambias cuando quieras, sin 
 - **📊 Dashboard** — Ingresos, gastos y ganancia de un vistazo, con filtros por día, semana, mes, año o rango personalizado. Servicios y productos más vendidos, atenciones recientes y alertas de stock bajo. En modo completo: **vacunas por vencer** y **confirmaciones de citas de mañana**.
 - **🩺 Atenciones** — Registra cada visita en segundos: servicios del catálogo y productos vendidos (con autocompletado), el stock se descuenta solo. En modo completo enlazas la atención a la ficha de la mascota (con peso y temperatura) y queda en su historial clínico.
 - **🧑‍🤝‍🧑 Clientes y mascotas** *(modo completo)* — Fichas de tutores (teléfono, email, RUT, dirección) y mascotas (especie, raza, sexo, edad, peso, microchip, esterilización). Cada mascota tiene su historial clínico, evolución de peso y registro de vacunas/antiparasitarios.
-- **🩻 Ficha clínica y recetas** *(modo completo)* — Anamnesis, examen físico, signos (peso, temperatura, FC, FR, mucosas), diagnóstico y tratamiento. Emite **recetas** e imprime **recetas, carnet de vacunas y certificados de salud** en PDF (con el logo y los datos de tu clínica).
+- **🩻 Ficha clínica y recetas** *(modo completo)* — Anamnesis, examen físico, signos (peso, temperatura, FC, FR, mucosas), diagnóstico y tratamiento. Emite **recetas** y descarga **recetas, carnet de vacunas y certificados de salud** como **PDF** generado en el servidor (con el logo y los datos de tu clínica).
 - **👥 Multiusuario y roles** *(modo completo)* — Admin, veterinario y recepción. Cada veterinario tiene su **agenda propia** y sus consultas. El admin gestiona el equipo desde **Usuarios**.
 - **📅 Agenda por cupos** *(modo completo)* — Calendario de citas filtrable por veterinario; cada vet define su **horario semanal** y la agenda (y el agendamiento público) muestran solo los **cupos libres**. Convierte una cita en atención con un clic.
 - **💳 Pagos y deuda** *(modo completo)* — Registra pagos por atención (efectivo, débito, crédito, transferencia), con estado Pagado/Parcial/Pendiente, saldo por cliente y total **Por cobrar** en el dashboard.
@@ -33,7 +33,7 @@ Desde **Configuración** eliges cómo opera la app (cambias cuando quieras, sin 
 
 ## 🧰 Tecnologías
 
-Next.js 16 · React 19 · Tailwind CSS 4 · SQLite (better-sqlite3 + Drizzle ORM) · SweetAlert2
+Next.js 16 · React 19 · Tailwind CSS 4 · SQLite (better-sqlite3 + Drizzle ORM) · SweetAlert2 · pdf-lib (PDFs)
 
 Sin servicios externos: la base de datos es un archivo SQLite que se crea y se siembra sola en el primer arranque.
 
