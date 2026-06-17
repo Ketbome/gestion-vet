@@ -53,3 +53,117 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   comprado: "Comprado",
   recibido: "Recibido",
 };
+
+export const CLINIC_MODES = ["basico", "completo"] as const;
+
+export type ClinicMode = (typeof CLINIC_MODES)[number];
+
+export const CLINIC_MODE_LABELS: Record<ClinicMode, string> = {
+  basico: "Básico",
+  completo: "Completo",
+};
+
+export const SPECIES = [
+  "perro",
+  "gato",
+  "conejo",
+  "ave",
+  "roedor",
+  "reptil",
+  "otro",
+] as const;
+
+export type Species = (typeof SPECIES)[number];
+
+export const SPECIES_LABELS: Record<Species, string> = {
+  perro: "Perro",
+  gato: "Gato",
+  conejo: "Conejo",
+  ave: "Ave",
+  roedor: "Roedor",
+  reptil: "Reptil",
+  otro: "Otro",
+};
+
+export const PET_SEX = ["macho", "hembra", "desconocido"] as const;
+
+export type PetSex = (typeof PET_SEX)[number];
+
+export const PET_SEX_LABELS: Record<PetSex, string> = {
+  macho: "Macho",
+  hembra: "Hembra",
+  desconocido: "Sin especificar",
+};
+
+export const APPOINTMENT_STATUSES = [
+  "solicitada",
+  "confirmada",
+  "completada",
+  "cancelada",
+] as const;
+
+export type AppointmentStatus = (typeof APPOINTMENT_STATUSES)[number];
+
+export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
+  solicitada: "Solicitada",
+  confirmada: "Confirmada",
+  completada: "Completada",
+  cancelada: "Cancelada",
+};
+
+export const HEALTH_RECORD_TYPES = ["vacuna", "antiparasitario"] as const;
+
+export type HealthRecordType = (typeof HEALTH_RECORD_TYPES)[number];
+
+export const HEALTH_RECORD_TYPE_LABELS: Record<HealthRecordType, string> = {
+  vacuna: "Vacuna",
+  antiparasitario: "Antiparasitario",
+};
+
+export const USER_ROLES = ["admin", "veterinario", "recepcion"] as const;
+
+export type UserRole = (typeof USER_ROLES)[number];
+
+export const USER_ROLE_LABELS: Record<UserRole, string> = {
+  admin: "Administrador",
+  veterinario: "Veterinario",
+  recepcion: "Recepción",
+};
+
+export const PAYMENT_METHODS = [
+  "efectivo",
+  "debito",
+  "credito",
+  "transferencia",
+  "otro",
+] as const;
+
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  efectivo: "Efectivo",
+  debito: "Débito",
+  credito: "Crédito",
+  transferencia: "Transferencia",
+  otro: "Otro",
+};
+
+export function paymentStatus(
+  total: number,
+  paid: number
+): { label: string; variant: "green" | "amber" | "red" } {
+  if (paid >= total && total > 0) return { label: "Pagado", variant: "green" };
+  if (paid > 0) return { label: "Parcial", variant: "amber" };
+  return { label: "Pendiente", variant: "red" };
+}
+
+// 0 = lunes … 6 = domingo
+export const WEEKDAYS = [
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
+  "Domingo",
+] as const;

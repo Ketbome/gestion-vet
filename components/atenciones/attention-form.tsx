@@ -19,6 +19,17 @@ import {
   ProductCombobox,
   type ComboboxProduct,
 } from "@/components/product-combobox";
+import type { ClinicMode } from "@/lib/constants";
+import { PAYMENT_METHODS, PAYMENT_METHOD_LABELS } from "@/lib/constants";
+import {
+  PatientFields,
+  type TutorOption,
+  type PetOption,
+} from "@/components/atenciones/patient-fields";
+import {
+  ClinicalFields,
+  type VetOption,
+} from "@/components/atenciones/clinical-fields";
 
 export type ServiceOption = { id: number; name: string; price: number };
 
@@ -30,17 +41,32 @@ export function AttentionForm({
   products,
   action,
   defaultDate,
+  mode = "basico",
+  tutors = [],
+  pets = [],
+  vets = [],
+  defaultPet,
+  defaultVetId,
+  appointmentId,
 }: {
   services: ServiceOption[];
   products: ComboboxProduct[];
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   defaultDate: string;
+  mode?: ClinicMode;
+  tutors?: TutorOption[];
+  pets?: PetOption[];
+  vets?: VetOption[];
+  defaultPet?: { id: number; name: string; tutorId: number; tutorName: string };
+  defaultVetId?: number;
+  appointmentId?: number;
 }) {
   const [state, formAction] = useActionState<ActionState, FormData>(action, {});
   const [serviceLines, setServiceLines] = useState<ServiceLine[]>([]);
   const [productLines, setProductLines] = useState<ProductLine[]>([]);
   const [discountType, setDiscountType] = useState<DiscountType>("amount");
   const [discountValue, setDiscountValue] = useState(0);
+  const [paid, setPaid] = useState(false);
 
   const subtotal =
     serviceLines.reduce((sum, l) => sum + l.price * l.quantity, 0) +
@@ -94,16 +120,20 @@ export function AttentionForm({
   return (
     <form action={formAction} className="max-w-2xl space-y-4">
       <Card className="space-y-4 p-5">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div>
-            <Label htmlFor="petName">Mascota</Label>
-            <Input id="petName" name="petName" placeholder="Ej: Firulais" required />
+        {mode === "completo" ? (
+          <PatientFields tutors={tutors} pets={pets} defaultPet={defaultPet} />
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="petName">Mascota</Label>
+              <Input id="petName" name="petName" placeholder="Ej: Firulais" required />
+            </div>
+            <div>
+              <Label htmlFor="ownerName">Dueño/a</Label>
+              <Input id="ownerName" name="ownerName" placeholder="Ej: María Pérez" required />
+            </div>
           </div>
-          <div>
-            <Label htmlFor="ownerName">Dueño/a</Label>
-            <Input id="ownerName" name="ownerName" placeholder="Ej: María Pérez" required />
-          </div>
-        </div>
+        )}
         <div>
           <Label htmlFor="date">Fecha</Label>
           <Input id="date" name="date" type="date" defaultValue={defaultDate} required />
@@ -117,6 +147,19 @@ export function AttentionForm({
           />
         </div>
       </Card>
+
+      {mode === "completo" && (
+        <Card className="space-y-3 p-5">
+          <details>
+            <summary className="cursor-pointer font-semibold text-gray-900">
+              Ficha clínica (opcional)
+            </summary>
+            <div className="mt-3">
+              <ClinicalFields vets={vets} defaultVetId={defaultVetId} />
+            </div>
+          </details>
+        </Card>
+      )}
 
       <Card className="space-y-3 p-5">
         <h2 className="font-semibold text-gray-900">Servicios</h2>
@@ -197,9 +240,37 @@ export function AttentionForm({
             {formatCurrency(total)}
           </span>
         </div>
+
+        <label className="flex items-center gap-3 border-t border-gray-100 pt-3">
+          <input
+            type="checkbox"
+            name="paid"
+            checked={paid}
+            onChange={(e) => setPaid(e.target.checked)}
+            className="h-4 w-4"
+          />
+          <span className="text-sm font-medium text-gray-700">
+            Pagado ({formatCurrency(total)})
+          </span>
+        </label>
+        {paid && (
+          <div>
+            <Label htmlFor="paymentMethod">Medio de pago</Label>
+            <Select id="paymentMethod" name="paymentMethod" defaultValue="efectivo">
+              {PAYMENT_METHODS.map((m) => (
+                <option key={m} value={m}>
+                  {PAYMENT_METHOD_LABELS[m]}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
       </Card>
 
       <input type="hidden" name="items" value={itemsJson} />
+      {appointmentId && (
+        <input type="hidden" name="appointmentId" value={appointmentId} />
+      )}
       <FormError message={state.error} />
       <SubmitButton className="w-full sm:w-auto">Registrar atención</SubmitButton>
     </form>

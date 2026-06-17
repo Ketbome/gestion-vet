@@ -63,3 +63,26 @@ export function formatDate(isoDate: string): string {
   if (!y || !m || !d) return isoDate;
   return dateFormatter.format(new Date(y, m - 1, d));
 }
+
+export function addDays(isoDate: string, days: number): string {
+  const [y, m, d] = isoDate.slice(0, 10).split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + days);
+  return toISODate(date);
+}
+
+export function ageLabel(birthDate: string): string {
+  const [y, m, d] = birthDate.slice(0, 10).split("-").map(Number);
+  if (!y || !m || !d) return "";
+  const now = new Date();
+  let months =
+    (now.getFullYear() - y) * 12 + (now.getMonth() + 1 - m);
+  if (now.getDate() < d) months -= 1;
+  if (months < 0) return "";
+  if (months < 12) return `${months} mes${months === 1 ? "" : "es"}`;
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  return rest
+    ? `${years} año${years === 1 ? "" : "s"} ${rest} mes${rest === 1 ? "" : "es"}`
+    : `${years} año${years === 1 ? "" : "s"}`;
+}

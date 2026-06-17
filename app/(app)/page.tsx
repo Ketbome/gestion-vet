@@ -2,6 +2,9 @@ import Link from "next/link";
 import { rangeFromSearchParams, formatDate } from "@/lib/dates";
 import { formatCurrency } from "@/lib/currency";
 import { getDashboardData } from "@/lib/queries/dashboard";
+import { getClinicMode } from "@/lib/settings";
+import { HEALTH_RECORD_TYPE_LABELS, type HealthRecordType } from "@/lib/constants";
+import { confirmAppointment, cancelAppointment } from "@/lib/actions/appointments";
 import { PageHeader } from "@/components/ui/page-header";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Card } from "@/components/ui/card";
@@ -26,6 +29,7 @@ export default async function DashboardPage({
   const range = rangeFromSearchParams(await searchParams);
   const data = getDashboardData(range);
   const periodo = RANGE_LABELS[range.rango] ?? "en el período";
+  const mode = getClinicMode();
 
   return (
     <>
@@ -62,6 +66,14 @@ export default async function DashboardPage({
           hint={data.lowStock.length > 0 ? "requiere reposición" : "todo en orden"}
           tone={data.lowStock.length > 0 ? "negative" : "default"}
         />
+        {mode === "completo" && (
+          <StatCard
+            label="Por cobrar"
+            value={formatCurrency(data.receivable)}
+            hint={data.receivable > 0 ? "saldos pendientes" : "todo cobrado"}
+            tone={data.receivable > 0 ? "negative" : "default"}
+          />
+        )}
       </div>
 
       {data.lowStock.length > 0 && (
@@ -91,6 +103,76 @@ export default async function DashboardPage({
           >
             Hacer un pedido →
           </Link>
+        </Card>
+      )}
+
+      {mode === "completo" && data.pendingConfirmations.length > 0 && (
+        <Card className="mt-4 border-blue-200 bg-blue-50 p-4">
+          <div className="mb-2 flex items-center gap-2 text-blue-800">
+            <Icon name="calendar" className="h-5 w-5" />
+            <h2 className="font-semibold">Confirmaciones de mañana</h2>
+          </div>
+          <p className="mb-2 text-xs text-blue-700">
+            Contacta a estos clientes para confirmar su cita.
+          </p>
+          <ul className="space-y-2">
+            {data.pendingConfirmations.map((a) => (
+              <li
+                key={a.id}
+                className="flex flex-wrap items-center justify-between gap-2 text-sm"
+              >
+                <span className="min-w-0 text-blue-900">
+                  {a.time ? `${a.time} · ` : ""}
+                  <strong className="font-medium">{a.petName || "—"}</strong>
+                  {" · "}
+                  {a.tutorName}
+                  <span className="text-blue-700">
+                    {" "}
+                    {[a.tutorPhone, a.tutorEmail].filter(Boolean).join(" · ")}
+                  </span>
+                </span>
+                <span className="flex shrink-0 items-center gap-1">
+                  <form action={confirmAppointment.bind(null, a.id)}>
+                    <button className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700">
+                      Confirmar
+                    </button>
+                  </form>
+                  <form action={cancelAppointment.bind(null, a.id)}>
+                    <button className="rounded-lg px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100">
+                      Cancelar
+                    </button>
+                  </form>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {mode === "completo" && data.upcomingDue.length > 0 && (
+        <Card className="mt-4 border-amber-200 bg-amber-50 p-4">
+          <div className="mb-2 flex items-center gap-2 text-amber-800">
+            <Icon name="syringe" className="h-5 w-5" />
+            <h2 className="font-semibold">Vacunas y antiparasitarios por vencer</h2>
+          </div>
+          <ul className="space-y-1">
+            {data.upcomingDue.map((r) => (
+              <li key={r.id} className="flex items-center justify-between gap-2 text-sm">
+                <Link href={`/mascotas/${r.petId}`} className="min-w-0 truncate text-amber-900 hover:underline">
+                  <strong className="font-medium">{r.petName}</strong>
+                  {" · "}
+                  {r.name}
+                  <span className="text-amber-700">
+                    {" "}
+                    ({HEALTH_RECORD_TYPE_LABELS[r.type as HealthRecordType] ?? r.type})
+                  </span>
+                </Link>
+                <span className="shrink-0 font-medium text-amber-800 tabular-nums">
+                  {r.nextDueDate ? formatDate(r.nextDueDate) : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
         </Card>
       )}
 

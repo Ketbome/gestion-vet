@@ -8,6 +8,7 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { sql } from "drizzle-orm";
 import * as schema from "./schema";
 import { seed } from "./seed";
+import { hashPassword } from "../password";
 
 type DB = BetterSQLite3Database<typeof schema>;
 
@@ -31,6 +32,20 @@ function createDb(): DB {
       .all<{ count: number }>(sql`select count(*) as count from services`);
     if (count === 0) {
       seed(db);
+    }
+
+    // Bootstrap: si no hay usuarios, crear el admin desde las variables de
+    // entorno para que el login funcione sin configuración previa.
+    const [{ userCount }] = db.all<{ userCount: number }>(
+      sql`select count(*) as userCount from users`
+    );
+    if (userCount === 0) {
+      const username = process.env.AUTH_USER ?? "admin";
+      const { hash, salt } = hashPassword(process.env.AUTH_PASSWORD ?? "admin");
+      db.run(
+        sql`insert into users (username, name, role, password_hash, password_salt)
+            values (${username}, ${"Administrador"}, ${"admin"}, ${hash}, ${salt})`
+      );
     }
   }
 

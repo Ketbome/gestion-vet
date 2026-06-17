@@ -2,6 +2,8 @@ import { jwtVerify } from "jose";
 
 export const SESSION_COOKIE = "session";
 
+export type SessionUser = { uid: number; role: string; name: string };
+
 function getSecret(): Uint8Array {
   const secret = process.env.JWT_SECRET;
   if (!secret) throw new Error("Falta JWT_SECRET en las variables de entorno");
@@ -10,13 +12,20 @@ function getSecret(): Uint8Array {
 
 export async function verifyToken(
   token: string | undefined
-): Promise<{ user: string } | null> {
+): Promise<SessionUser | null> {
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, getSecret(), {
       algorithms: ["HS256"],
     });
-    return typeof payload.user === "string" ? { user: payload.user } : null;
+    if (
+      typeof payload.uid === "number" &&
+      typeof payload.role === "string" &&
+      typeof payload.name === "string"
+    ) {
+      return { uid: payload.uid, role: payload.role, name: payload.name };
+    }
+    return null;
   } catch {
     return null;
   }

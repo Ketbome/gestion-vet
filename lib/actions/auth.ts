@@ -1,38 +1,35 @@
 "use server";
 
-import { timingSafeEqual } from "node:crypto";
+import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { db, users } from "@/lib/db";
 import { createSession, deleteSession } from "@/lib/auth";
+import { verifyPassword } from "@/lib/password";
 
 export type AuthState = { error?: string };
-
-function safeEquals(a: string, b: string): boolean {
-  const max = Math.max(a.length, b.length, 1);
-  const bufA = Buffer.alloc(max);
-  const bufB = Buffer.alloc(max);
-  bufA.write(a);
-  bufB.write(b);
-  return timingSafeEqual(bufA, bufB) && a.length === b.length;
-}
 
 export async function login(
   _prevState: AuthState,
   formData: FormData
 ): Promise<AuthState> {
-  const user = String(formData.get("user") ?? "");
+  const username = String(formData.get("user") ?? "").trim();
   const password = String(formData.get("password") ?? "");
 
-  const validUser = process.env.AUTH_USER ?? "";
-  const validPassword = process.env.AUTH_PASSWORD ?? "";
+  const user = db
+    .select()
+    .from(users)
+    .where(eq(users.username, username))
+    .get();
 
-  const userOk = safeEquals(user, validUser);
-  const passOk = safeEquals(password, validPassword);
-
-  if (!userOk || !passOk) {
+  if (
+    !user ||
+    !user.active ||
+    !verifyPassword(password, user.passwordHash, user.passwordSalt)
+  ) {
     return { error: "Credenciales inválidas" };
   }
 
-  await createSession(user);
+  await createSession({ uid: user.id, role: user.role, name: user.name });
   redirect("/");
 }
 

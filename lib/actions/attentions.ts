@@ -8,11 +8,18 @@ import {
   attentions,
   attentionProducts,
   attentionServices,
+  appointments,
+  payments,
+  petHealthRecords,
+  pets,
   products,
   services,
+  tutors,
 } from "@/lib/db";
 import { verifySession } from "@/lib/auth";
 import { computeDiscount, parseDiscountType } from "@/lib/discount";
+import { addDays } from "@/lib/dates";
+import { PAYMENT_METHODS } from "@/lib/constants";
 
 export type ActionState = { error?: string };
 
@@ -44,13 +51,51 @@ export async function createAttention(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  if (!(await verifySession())) redirect("/login");
+  const me = await verifySession();
+  if (!me) redirect("/login");
 
-  const petName = String(formData.get("petName") ?? "").trim();
-  const ownerName = String(formData.get("ownerName") ?? "").trim();
+  let petName = String(formData.get("petName") ?? "").trim();
+  let ownerName = String(formData.get("ownerName") ?? "").trim();
   const date = String(formData.get("date") ?? "").slice(0, 10);
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const items = parseItems(String(formData.get("items") ?? ""));
+
+  const petId = Number(formData.get("petId")) || null;
+  let tutorId = Number(formData.get("tutorId")) || null;
+  const vetId = Number(formData.get("vetId")) || null;
+  const temperature = String(formData.get("temperature") ?? "").trim() || null;
+  const weightKg = Number(formData.get("weightKg") ?? 0);
+  const weightGrams =
+    Number.isFinite(weightKg) && weightKg > 0 ? Math.round(weightKg * 1000) : null;
+  const heartRate = Number(formData.get("heartRate")) || null;
+  const respRate = Number(formData.get("respRate")) || null;
+  const mucous = String(formData.get("mucous") ?? "").trim() || null;
+  const anamnesis = String(formData.get("anamnesis") ?? "").trim() || null;
+  const examFindings = String(formData.get("examFindings") ?? "").trim() || null;
+  const diagnosis = String(formData.get("diagnosis") ?? "").trim() || null;
+  const treatment = String(formData.get("treatment") ?? "").trim() || null;
+  const appointmentId = Number(formData.get("appointmentId")) || null;
+  const paid = formData.get("paid") === "on";
+  const paymentMethodRaw = String(formData.get("paymentMethod") ?? "efectivo");
+  const paymentMethod = (PAYMENT_METHODS as readonly string[]).includes(
+    paymentMethodRaw
+  )
+    ? paymentMethodRaw
+    : "efectivo";
+
+  // En modo completo el paciente viene por ficha: resolver nombres desde la BD
+  if (petId) {
+    const pet = db.select().from(pets).where(eq(pets.id, petId)).get();
+    if (!pet) return { error: "La mascota seleccionada ya no existe" };
+    petName = pet.name;
+    tutorId = pet.tutorId;
+    const owner = db
+      .select({ name: tutors.name })
+      .from(tutors)
+      .where(eq(tutors.id, pet.tutorId))
+      .get();
+    ownerName = owner?.name ?? ownerName;
+  }
 
   if (!petName) return { error: "El nombre de la mascota es obligatorio" };
   if (!ownerName) return { error: "El nombre del dueño es obligatorio" };
@@ -103,7 +148,26 @@ export async function createAttention(
     db.transaction((tx) => {
       const attention = tx
         .insert(attentions)
-        .values({ petName, ownerName, date, notes, discount, total })
+        .values({
+          petName,
+          ownerName,
+          tutorId,
+          petId,
+          vetId,
+          weightGrams,
+          temperature,
+          heartRate,
+          respRate,
+          mucous,
+          anamnesis,
+          examFindings,
+          diagnosis,
+          treatment,
+          date,
+          notes,
+          discount,
+          total,
+        })
         .returning()
         .get();
 
@@ -150,6 +214,56 @@ export async function createAttention(
           }
         }
       }
+
+      // Ficha: actualizar peso actual y registrar vacunas/antiparasitarios
+      if (petId) {
+        if (weightGrams) {
+          tx.update(pets)
+            .set({ weightGrams })
+            .where(eq(pets.id, petId))
+            .run();
+        }
+        for (const p of items.products) {
+          const product = productInfo.get(p.productId);
+          if (!product) continue;
+          if (product.category === "vacuna" || product.category === "antiparasitario") {
+            const nextDueDate = addDays(
+              date,
+              product.category === "vacuna" ? 365 : 30
+            );
+            tx.insert(petHealthRecords)
+              .values({
+                petId,
+                type: product.category,
+                name: product.name,
+                appliedDate: date,
+                nextDueDate,
+                attentionId: attention.id,
+              })
+              .run();
+          }
+        }
+      }
+
+      if (appointmentId) {
+        tx.update(appointments)
+          .set({ status: "completada", attentionId: attention.id })
+          .where(eq(appointments.id, appointmentId))
+          .run();
+      }
+
+      // Pago inmediato: registra el total como pagado
+      if (paid && total > 0) {
+        tx.insert(payments)
+          .values({
+            attentionId: attention.id,
+            amount: total,
+            method: paymentMethod,
+            date,
+            userId: me.uid,
+          })
+          .run();
+      }
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "";
@@ -161,8 +275,65 @@ export async function createAttention(
 
   revalidatePath("/atenciones");
   revalidatePath("/inventario");
+  revalidatePath("/clientes");
+  revalidatePath("/agenda");
+  if (petId) revalidatePath(`/mascotas/${petId}`);
   revalidatePath("/");
   redirect("/atenciones");
+}
+
+export async function updateAttentionClinical(
+  id: number,
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const me = await verifySession();
+  if (!me) redirect("/login");
+  if (me.role === "recepcion")
+    return { error: "No tienes permiso para editar la ficha clínica" };
+
+  const vetId = Number(formData.get("vetId")) || null;
+  const weightKg = Number(formData.get("weightKg") ?? 0);
+  const weightGrams =
+    Number.isFinite(weightKg) && weightKg > 0 ? Math.round(weightKg * 1000) : null;
+  const temperature = String(formData.get("temperature") ?? "").trim() || null;
+  const heartRate = Number(formData.get("heartRate")) || null;
+  const respRate = Number(formData.get("respRate")) || null;
+  const mucous = String(formData.get("mucous") ?? "").trim() || null;
+  const anamnesis = String(formData.get("anamnesis") ?? "").trim() || null;
+  const examFindings = String(formData.get("examFindings") ?? "").trim() || null;
+  const diagnosis = String(formData.get("diagnosis") ?? "").trim() || null;
+  const treatment = String(formData.get("treatment") ?? "").trim() || null;
+
+  const current = db.select().from(attentions).where(eq(attentions.id, id)).get();
+  if (!current) return { error: "La atención no existe" };
+
+  db.update(attentions)
+    .set({
+      vetId,
+      weightGrams,
+      temperature,
+      heartRate,
+      respRate,
+      mucous,
+      anamnesis,
+      examFindings,
+      diagnosis,
+      treatment,
+    })
+    .where(eq(attentions.id, id))
+    .run();
+
+  if (current.petId && weightGrams) {
+    db.update(pets)
+      .set({ weightGrams })
+      .where(eq(pets.id, current.petId))
+      .run();
+    revalidatePath(`/mascotas/${current.petId}`);
+  }
+
+  revalidatePath(`/atenciones/${id}`);
+  redirect(`/atenciones/${id}`);
 }
 
 export async function deleteAttention(id: number) {

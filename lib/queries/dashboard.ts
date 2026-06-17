@@ -1,15 +1,19 @@
-import { and, between, desc, eq, gt, lte, ne, sql } from "drizzle-orm";
+import { and, asc, between, desc, eq, gt, lte, ne, notInArray, sql } from "drizzle-orm";
 import {
   db,
   attentions,
   attentionProducts,
   attentionServices,
+  appointments,
   expenses,
   orders,
+  petHealthRecords,
+  pets,
   products,
   services,
+  tutors,
 } from "@/lib/db";
-import type { DateRange } from "@/lib/dates";
+import { addDays, today, type DateRange } from "@/lib/dates";
 
 export function getDashboardData(range: DateRange) {
   const inRange = between(attentions.date, range.start, range.end);
@@ -90,6 +94,55 @@ export function getDashboardData(range: DateRange) {
     .limit(5)
     .all();
 
+  const todayIso = today();
+
+  // Por cobrar: suma de saldos pendientes de todas las atenciones
+  const [{ receivable }] = db.all<{ receivable: number }>(
+    sql`select coalesce(sum(rem), 0) as receivable from (
+          select ${attentions.total} - coalesce(
+            (select sum(amount) from payments where attention_id = ${attentions.id}), 0
+          ) as rem
+          from ${attentions}
+        ) where rem > 0`
+  );
+
+  // Vacunas/antiparasitarios por vencer en los próximos 14 días o ya vencidos
+  const upcomingDue = db
+    .select({
+      id: petHealthRecords.id,
+      name: petHealthRecords.name,
+      type: petHealthRecords.type,
+      nextDueDate: petHealthRecords.nextDueDate,
+      petId: pets.id,
+      petName: pets.name,
+      tutorName: tutors.name,
+    })
+    .from(petHealthRecords)
+    .innerJoin(pets, eq(petHealthRecords.petId, pets.id))
+    .innerJoin(tutors, eq(pets.tutorId, tutors.id))
+    .where(
+      and(
+        eq(pets.active, true),
+        lte(petHealthRecords.nextDueDate, addDays(todayIso, 14))
+      )
+    )
+    .orderBy(asc(petHealthRecords.nextDueDate))
+    .limit(10)
+    .all();
+
+  // Citas de mañana que aún requieren confirmar con el cliente
+  const pendingConfirmations = db
+    .select()
+    .from(appointments)
+    .where(
+      and(
+        eq(appointments.date, addDays(todayIso, 1)),
+        notInArray(appointments.status, ["confirmada", "cancelada", "completada"])
+      )
+    )
+    .orderBy(asc(appointments.time))
+    .all();
+
   return {
     income,
     attentionCount,
@@ -100,5 +153,8 @@ export function getDashboardData(range: DateRange) {
     recentAttentions,
     lowStock,
     pendingOrders,
+    upcomingDue,
+    pendingConfirmations,
+    receivable,
   };
 }

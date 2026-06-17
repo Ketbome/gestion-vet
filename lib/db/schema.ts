@@ -36,6 +36,19 @@ export const attentions = sqliteTable("attentions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   petName: text("pet_name").notNull(),
   ownerName: text("owner_name").notNull(),
+  // En modo completo apuntan a la ficha; en básico quedan nulos (texto libre)
+  tutorId: integer("tutor_id").references(() => tutors.id),
+  petId: integer("pet_id").references(() => pets.id),
+  vetId: integer("vet_id").references(() => users.id),
+  weightGrams: integer("weight_grams"),
+  temperature: text("temperature"),
+  heartRate: integer("heart_rate"),
+  respRate: integer("resp_rate"),
+  mucous: text("mucous"),
+  anamnesis: text("anamnesis"),
+  examFindings: text("exam_findings"),
+  diagnosis: text("diagnosis"),
+  treatment: text("treatment"),
   date: text("date").notNull(),
   notes: text("notes"),
   // Descuento ya aplicado, en pesos: total = suma de líneas - discount
@@ -108,6 +121,175 @@ export const expenses = sqliteTable("expenses", {
     .default(sql`(datetime('now'))`),
 });
 
+export const settings = sqliteTable("settings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  clinicMode: text("clinic_mode").notNull().default("basico"),
+  clinicName: text("clinic_name").notNull().default(""),
+  publicBookingEnabled: integer("public_booking_enabled", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  bookingHoursNote: text("booking_hours_note"),
+  slotMinutes: integer("slot_minutes").notNull().default(30),
+  logo: text("logo"),
+  clinicRut: text("clinic_rut"),
+  clinicAddress: text("clinic_address"),
+  clinicPhone: text("clinic_phone"),
+  clinicEmail: text("clinic_email"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export const tutors = sqliteTable("tutors", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  phone: text("phone"),
+  email: text("email"),
+  rut: text("rut"),
+  address: text("address"),
+  notes: text("notes"),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export const pets = sqliteTable("pets", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  tutorId: integer("tutor_id")
+    .notNull()
+    .references(() => tutors.id),
+  name: text("name").notNull(),
+  species: text("species").notNull().default("perro"),
+  breed: text("breed"),
+  sex: text("sex").notNull().default("desconocido"),
+  birthDate: text("birth_date"),
+  weightGrams: integer("weight_grams"),
+  microchip: text("microchip"),
+  sterilized: integer("sterilized", { mode: "boolean" }).notNull().default(false),
+  notes: text("notes"),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export const petHealthRecords = sqliteTable("pet_health_records", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  type: text("type").notNull().default("vacuna"),
+  name: text("name").notNull(),
+  appliedDate: text("applied_date").notNull(),
+  nextDueDate: text("next_due_date"),
+  attentionId: integer("attention_id").references(() => attentions.id, {
+    onDelete: "set null",
+  }),
+  notes: text("notes"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export const appointments = sqliteTable("appointments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  // Si el cliente ya tiene ficha quedan enlazados; en solicitudes públicas
+  // sin ficha previa se usan los campos sueltos de tutor/mascota
+  tutorId: integer("tutor_id").references(() => tutors.id),
+  petId: integer("pet_id").references(() => pets.id),
+  tutorName: text("tutor_name").notNull().default(""),
+  tutorPhone: text("tutor_phone"),
+  tutorEmail: text("tutor_email"),
+  petName: text("pet_name").notNull().default(""),
+  species: text("species"),
+  date: text("date").notNull(),
+  time: text("time"),
+  reason: text("reason"),
+  vetId: integer("vet_id").references(() => users.id),
+  durationMin: integer("duration_min").notNull().default(30),
+  status: text("status").notNull().default("solicitada"),
+  source: text("source").notNull().default("interna"),
+  confirmedAt: text("confirmed_at"),
+  attentionId: integer("attention_id").references(() => attentions.id, {
+    onDelete: "set null",
+  }),
+  notes: text("notes"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export const users = sqliteTable("users", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  username: text("username").notNull().unique(),
+  name: text("name").notNull(),
+  role: text("role").notNull().default("veterinario"),
+  passwordHash: text("password_hash").notNull(),
+  passwordSalt: text("password_salt").notNull(),
+  color: text("color").notNull().default("#0ea5e9"),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export const vetSchedules = sqliteTable("vet_schedules", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  weekday: integer("weekday").notNull(),
+  startTime: text("start_time").notNull(),
+  endTime: text("end_time").notNull(),
+});
+
+export const prescriptions = sqliteTable("prescriptions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  tutorId: integer("tutor_id").references(() => tutors.id),
+  vetId: integer("vet_id").references(() => users.id),
+  attentionId: integer("attention_id").references(() => attentions.id, {
+    onDelete: "set null",
+  }),
+  date: text("date").notNull(),
+  notes: text("notes"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export const prescriptionItems = sqliteTable("prescription_items", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  prescriptionId: integer("prescription_id")
+    .notNull()
+    .references(() => prescriptions.id, { onDelete: "cascade" }),
+  medication: text("medication").notNull(),
+  dose: text("dose"),
+  frequency: text("frequency"),
+  duration: text("duration"),
+  instructions: text("instructions"),
+});
+
+export const payments = sqliteTable("payments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  attentionId: integer("attention_id")
+    .notNull()
+    .references(() => attentions.id, { onDelete: "cascade" }),
+  amount: integer("amount").notNull().default(0),
+  method: text("method").notNull().default("efectivo"),
+  date: text("date").notNull(),
+  userId: integer("user_id").references(() => users.id),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
 export type Product = typeof products.$inferSelect;
 export type Service = typeof services.$inferSelect;
 export type Attention = typeof attentions.$inferSelect;
@@ -116,3 +298,13 @@ export type AttentionProduct = typeof attentionProducts.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type Expense = typeof expenses.$inferSelect;
+export type Settings = typeof settings.$inferSelect;
+export type Tutor = typeof tutors.$inferSelect;
+export type Pet = typeof pets.$inferSelect;
+export type PetHealthRecord = typeof petHealthRecords.$inferSelect;
+export type Appointment = typeof appointments.$inferSelect;
+export type User = typeof users.$inferSelect;
+export type VetSchedule = typeof vetSchedules.$inferSelect;
+export type Prescription = typeof prescriptions.$inferSelect;
+export type PrescriptionItem = typeof prescriptionItems.$inferSelect;
+export type Payment = typeof payments.$inferSelect;
