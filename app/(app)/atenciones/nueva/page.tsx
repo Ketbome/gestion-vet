@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { and, asc, eq } from "drizzle-orm";
-import { db, appointments, pets, products, services, tutors, users } from "@/lib/db";
+import { asc, eq } from "drizzle-orm";
+import { db, appointments, pets, products, services, tutors } from "@/lib/db";
 import { createAttention } from "@/lib/actions/attentions";
+import { getSchedulableVets } from "@/lib/queries/vets";
 import { today } from "@/lib/dates";
 import { getClinicMode } from "@/lib/settings";
 import { getCurrentUser } from "@/lib/auth";
@@ -47,14 +48,9 @@ export default async function NuevaAtencionPage({
     | undefined;
 
   if (mode === "completo") {
-    vetOptions = db
-      .select({ id: users.id, name: users.name })
-      .from(users)
-      .where(and(eq(users.active, true), eq(users.role, "veterinario")))
-      .orderBy(asc(users.name))
-      .all();
+    vetOptions = getSchedulableVets();
     const me = await getCurrentUser();
-    if (me?.role === "veterinario") defaultVetId = me.uid;
+    if (me && vetOptions.some((v) => v.id === me.uid)) defaultVetId = me.uid;
 
     tutorOptions = db
       .select({ id: tutors.id, name: tutors.name, phone: tutors.phone })

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { and, asc, eq } from "drizzle-orm";
-import { db, users } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import { today } from "@/lib/dates";
+import { getSchedulableVets } from "@/lib/queries/vets";
 import { Logo } from "@/components/logo";
 import { Card } from "@/components/ui/card";
 import { PublicBookingForm } from "@/components/agenda/public-booking-form";
@@ -16,14 +15,7 @@ export default function AgendarPage() {
   const available =
     settings.clinicMode === "completo" && settings.publicBookingEnabled;
 
-  const vets = available
-    ? db
-        .select({ id: users.id, name: users.name })
-        .from(users)
-        .where(and(eq(users.active, true), eq(users.role, "veterinario")))
-        .orderBy(asc(users.name))
-        .all()
-    : [];
+  const vets = available ? getSchedulableVets() : [];
 
   return (
     <div className="min-h-dvh bg-gray-50 px-4 py-10">

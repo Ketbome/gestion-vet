@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { and, asc, eq } from "drizzle-orm";
-import { db, pets, products, users } from "@/lib/db";
+import { asc, eq } from "drizzle-orm";
+import { db, pets, products } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { getSchedulableVets } from "@/lib/queries/vets";
 import { today } from "@/lib/dates";
 import { PageHeader } from "@/components/ui/page-header";
 import { PrescriptionForm } from "@/components/recetas/prescription-form";
@@ -25,12 +26,7 @@ export default async function NuevaRecetaPage({
     .get();
   if (!pet) notFound();
 
-  const vets = db
-    .select({ id: users.id, name: users.name })
-    .from(users)
-    .where(and(eq(users.active, true), eq(users.role, "veterinario")))
-    .orderBy(asc(users.name))
-    .all();
+  const vets = getSchedulableVets();
 
   const medications = db
     .select({ name: products.name })
@@ -41,7 +37,7 @@ export default async function NuevaRecetaPage({
     .map((p) => p.name);
 
   const attentionId = Number(attention) || undefined;
-  const defaultVetId = me.role === "veterinario" ? me.uid : undefined;
+  const defaultVetId = vets.some((v) => v.id === me.uid) ? me.uid : undefined;
 
   return (
     <>

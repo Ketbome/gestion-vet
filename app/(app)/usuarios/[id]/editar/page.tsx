@@ -34,7 +34,7 @@ export default async function EditarUsuarioPage({
         <UserForm user={user} action={updateUser.bind(null, user.id)} />
 
         <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
-          {user.role === "veterinario" && (
+          {user.role !== "recepcion" && (
             <Link
               href={`/usuarios/${user.id}/horario`}
               className="text-sm font-semibold text-primary-600 hover:underline"

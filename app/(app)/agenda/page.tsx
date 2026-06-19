@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { and, asc, between, eq, ne } from "drizzle-orm";
-import { db, appointments, users } from "@/lib/db";
+import { db, appointments, vetBlocks } from "@/lib/db";
 import { today, formatDate } from "@/lib/dates";
 import { getCurrentUser } from "@/lib/auth";
 import { confirmAppointment, cancelAppointment } from "@/lib/actions/appointments";
+import { deleteBlock } from "@/lib/actions/schedules";
+import { getSchedulableVets } from "@/lib/queries/vets";
 import { PageHeader } from "@/components/ui/page-header";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Card } from "@/components/ui/card";
+import { DeleteButton } from "@/components/ui/delete-button";
 import { Calendar } from "@/components/agenda/calendar";
 import { AppointmentStatusBadge } from "@/components/agenda/appointment-status-badge";
+import { BlockForm } from "@/components/usuarios/block-form";
 
 export const metadata: Metadata = { title: "Agenda" };
 
@@ -30,12 +34,7 @@ export default async function AgendaPage({
   const monthStart = `${monthStr}-01`;
   const monthEnd = `${monthStr}-${String(lastDay).padStart(2, "0")}`;
 
-  const vetList = db
-    .select({ id: users.id, name: users.name, color: users.color })
-    .from(users)
-    .where(and(eq(users.active, true), eq(users.role, "veterinario")))
-    .orderBy(asc(users.name))
-    .all();
+  const vetList = getSchedulableVets();
   const vetName = new Map(vetList.map((v) => [v.id, v.name]));
 
   const me = await getCurrentUser();
@@ -45,7 +44,7 @@ export default async function AgendaPage({
       ? null
       : vet
         ? Number(vet)
-        : me?.role === "veterinario"
+        : me && vetList.some((v) => v.id === me.uid)
           ? me.uid
           : null;
 
@@ -76,6 +75,15 @@ export default async function AgendaPage({
     .where(and(eq(appointments.date, selectedDay), ...vetCond))
     .orderBy(asc(appointments.time))
     .all();
+
+  const dayBlocks = selectedVet
+    ? db
+        .select()
+        .from(vetBlocks)
+        .where(and(eq(vetBlocks.userId, selectedVet), eq(vetBlocks.date, selectedDay)))
+        .orderBy(asc(vetBlocks.startTime))
+        .all()
+    : [];
 
   return (
     <>
@@ -188,6 +196,46 @@ export default async function AgendaPage({
               ))}
             </ul>
           )}
+
+          <div className="mt-4 border-t border-gray-100 pt-3">
+            {selectedVet ? (
+              <details>
+                <summary className="cursor-pointer text-sm font-medium text-gray-600">
+                  Bloquear horario · {vetName.get(selectedVet) ?? ""}
+                </summary>
+                <div className="mt-3 space-y-3">
+                  {dayBlocks.length > 0 && (
+                    <ul className="divide-y divide-gray-100">
+                      {dayBlocks.map((b) => (
+                        <li
+                          key={b.id}
+                          className="flex items-center justify-between gap-2 py-1.5 text-sm"
+                        >
+                          <span className="text-gray-700">
+                            {b.startTime && b.endTime
+                              ? `${b.startTime} – ${b.endTime}`
+                              : "Día completo"}
+                            {b.reason && (
+                              <span className="text-gray-400"> · {b.reason}</span>
+                            )}
+                          </span>
+                          <DeleteButton
+                            action={deleteBlock.bind(null, b.id, selectedVet)}
+                            confirmTitle="¿Quitar bloqueo?"
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <BlockForm userId={selectedVet} defaultDate={selectedDay} />
+                </div>
+              </details>
+            ) : (
+              <p className="text-sm text-gray-400">
+                Elige un veterinario arriba para bloquear horas o días.
+              </p>
+            )}
+          </div>
         </Card>
       </div>
     </>

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { and, asc, eq } from "drizzle-orm";
-import { db, pets, tutors, users } from "@/lib/db";
+import { asc, eq } from "drizzle-orm";
+import { db, pets, tutors } from "@/lib/db";
 import { getClinicMode } from "@/lib/settings";
 import { getCurrentUser } from "@/lib/auth";
 import { today } from "@/lib/dates";
 import { createHospitalization } from "@/lib/actions/hospitalizations";
+import { getSchedulableVets } from "@/lib/queries/vets";
 import { PageHeader } from "@/components/ui/page-header";
 import { HospitalizationForm } from "@/components/hospitalizaciones/hospitalization-form";
 
@@ -28,15 +29,11 @@ export default async function NuevaHospitalizacionPage({
     .orderBy(asc(pets.name))
     .all();
 
-  const vetOptions = db
-    .select({ id: users.id, name: users.name })
-    .from(users)
-    .where(and(eq(users.active, true), eq(users.role, "veterinario")))
-    .orderBy(asc(users.name))
-    .all();
+  const vetOptions = getSchedulableVets();
 
   const me = await getCurrentUser();
-  const defaultVetId = me?.role === "veterinario" ? me.uid : undefined;
+  const defaultVetId =
+    me && vetOptions.some((v) => v.id === me.uid) ? me.uid : undefined;
 
   const petId = Number(petParam) || null;
   const defaultPet = petId

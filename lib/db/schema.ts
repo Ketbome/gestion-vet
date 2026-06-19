@@ -251,6 +251,21 @@ export const vetSchedules = sqliteTable("vet_schedules", {
   endTime: text("end_time").notNull(),
 });
 
+export const vetBlocks = sqliteTable("vet_blocks", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  date: text("date").notNull(),
+  // Si startTime/endTime quedan nulos, el día completo está bloqueado.
+  startTime: text("start_time"),
+  endTime: text("end_time"),
+  reason: text("reason"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
 export const prescriptions = sqliteTable("prescriptions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   petId: integer("pet_id")
@@ -363,6 +378,7 @@ export type PetHealthRecord = typeof petHealthRecords.$inferSelect;
 export type Appointment = typeof appointments.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type VetSchedule = typeof vetSchedules.$inferSelect;
+export type VetBlock = typeof vetBlocks.$inferSelect;
 export type Prescription = typeof prescriptions.$inferSelect;
 export type PrescriptionItem = typeof prescriptionItems.$inferSelect;
 export type Payment = typeof payments.$inferSelect;

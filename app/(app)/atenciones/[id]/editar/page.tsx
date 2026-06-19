@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { and, asc, eq } from "drizzle-orm";
-import { db, attentions, users } from "@/lib/db";
+import { eq } from "drizzle-orm";
+import { db, attentions } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { updateAttentionClinical } from "@/lib/actions/attentions";
+import { getSchedulableVets } from "@/lib/queries/vets";
 import { getClinicMode } from "@/lib/settings";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -29,12 +30,7 @@ export default async function EditarAtencionPage({
     .get();
   if (!attention) notFound();
 
-  const vets = db
-    .select({ id: users.id, name: users.name })
-    .from(users)
-    .where(and(eq(users.active, true), eq(users.role, "veterinario")))
-    .orderBy(asc(users.name))
-    .all();
+  const vets = getSchedulableVets();
 
   return (
     <>

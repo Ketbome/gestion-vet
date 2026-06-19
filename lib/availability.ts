@@ -1,7 +1,7 @@
 import "server-only";
 
 import { and, eq, ne } from "drizzle-orm";
-import { db, appointments, vetSchedules } from "@/lib/db";
+import { db, appointments, vetSchedules, vetBlocks } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 
 function toMinutes(hhmm: string): number {
@@ -31,6 +31,17 @@ export function freeSlots(vetId: number, date: string): string[] {
     .all();
   if (blocks.length === 0) return [];
 
+  // Bloqueos puntuales de esa fecha: día completo (sin horas) o rangos
+  const dayBlocks = db
+    .select()
+    .from(vetBlocks)
+    .where(and(eq(vetBlocks.userId, vetId), eq(vetBlocks.date, date)))
+    .all();
+  if (dayBlocks.some((b) => !b.startTime || !b.endTime)) return [];
+  const blockedRanges = dayBlocks
+    .filter((b) => b.startTime && b.endTime)
+    .map((b) => [toMinutes(b.startTime!), toMinutes(b.endTime!)] as const);
+
   const step = getSettings().slotMinutes || 30;
 
   const taken = new Set(
@@ -57,7 +68,10 @@ export function freeSlots(vetId: number, date: string): string[] {
       t += step
     ) {
       const hhmm = toHHMM(t);
-      if (!taken.has(hhmm)) slots.push(hhmm);
+      const blocked = blockedRanges.some(
+        ([start, end]) => t < end && t + step > start
+      );
+      if (!taken.has(hhmm) && !blocked) slots.push(hhmm);
     }
   }
   return slots.sort();
