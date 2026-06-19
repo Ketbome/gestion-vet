@@ -7,7 +7,7 @@ import { db, pets, tutors } from "@/lib/db";
 import { verifySession } from "@/lib/auth";
 import { SPECIES, PET_SEX } from "@/lib/constants";
 
-export type ActionState = { error?: string };
+export type ActionState = { error?: string; ok?: boolean };
 
 function parsePet(formData: FormData) {
   const tutorId = Math.round(Number(formData.get("tutorId") ?? 0));
@@ -17,6 +17,8 @@ function parsePet(formData: FormData) {
   const sex = String(formData.get("sex") ?? "desconocido");
   const birthDate = String(formData.get("birthDate") ?? "").slice(0, 10) || null;
   const microchip = String(formData.get("microchip") ?? "").trim() || null;
+  const color = String(formData.get("color") ?? "").trim() || null;
+  const allergies = String(formData.get("allergies") ?? "").trim() || null;
   const sterilized = formData.get("sterilized") === "on";
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const weightKg = Number(formData.get("weightKg") ?? 0);
@@ -40,6 +42,8 @@ function parsePet(formData: FormData) {
       sex,
       birthDate,
       microchip,
+      color,
+      allergies,
       sterilized,
       notes,
       weightGrams,
@@ -82,6 +86,30 @@ export async function updatePet(
   revalidatePath(`/mascotas/${id}`);
   revalidatePath(`/clientes/${parsed.data.tutorId}`);
   redirect(`/mascotas/${id}`);
+}
+
+export async function setNextVisit(
+  petId: number,
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  if (!(await verifySession())) redirect("/login");
+
+  const date = String(formData.get("nextVisitDate") ?? "").slice(0, 10) || null;
+  const note = String(formData.get("nextVisitNote") ?? "").trim() || null;
+
+  if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date))
+    return { error: "Fecha inválida" };
+
+  db.update(pets)
+    .set({ nextVisitDate: date, nextVisitNote: date ? note : null })
+    .where(eq(pets.id, petId))
+    .run();
+
+  revalidatePath(`/mascotas/${petId}`);
+  revalidatePath("/recordatorios");
+  revalidatePath("/");
+  return { ok: true };
 }
 
 export async function deletePet(id: number) {

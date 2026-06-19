@@ -29,6 +29,12 @@ export function Sidebar({ mode, role }: { mode: ClinicMode; role: UserRole }) {
             <SidebarLink href="/agenda" icon="calendar">
               Agenda
             </SidebarLink>
+            <SidebarLink href="/hospitalizaciones" icon="hospital">
+              Hospitalización
+            </SidebarLink>
+            <SidebarLink href="/recordatorios" icon="bell">
+              Recordatorios
+            </SidebarLink>
           </>
         )}
         <SidebarLink href="/inventario" icon="box">

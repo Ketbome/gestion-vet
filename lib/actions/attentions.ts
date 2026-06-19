@@ -75,6 +75,8 @@ export async function createAttention(
   const diagnosis = String(formData.get("diagnosis") ?? "").trim() || null;
   const treatment = String(formData.get("treatment") ?? "").trim() || null;
   const appointmentId = Number(formData.get("appointmentId")) || null;
+  const nextVisitDate = String(formData.get("nextVisitDate") ?? "").slice(0, 10) || null;
+  const nextVisitNote = String(formData.get("nextVisitNote") ?? "").trim() || null;
   const paid = formData.get("paid") === "on";
   const paymentMethodRaw = String(formData.get("paymentMethod") ?? "efectivo");
   const paymentMethod = (PAYMENT_METHODS as readonly string[]).includes(
@@ -223,6 +225,12 @@ export async function createAttention(
             .where(eq(pets.id, petId))
             .run();
         }
+        if (nextVisitDate && /^\d{4}-\d{2}-\d{2}$/.test(nextVisitDate)) {
+          tx.update(pets)
+            .set({ nextVisitDate, nextVisitNote })
+            .where(eq(pets.id, petId))
+            .run();
+        }
         for (const p of items.products) {
           const product = productInfo.get(p.productId);
           if (!product) continue;
@@ -277,6 +285,7 @@ export async function createAttention(
   revalidatePath("/inventario");
   revalidatePath("/clientes");
   revalidatePath("/agenda");
+  revalidatePath("/recordatorios");
   if (petId) revalidatePath(`/mascotas/${petId}`);
   revalidatePath("/");
   redirect("/atenciones");

@@ -2,7 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, desc, eq, isNotNull } from "drizzle-orm";
-import { db, attentions, pets, petHealthRecords, prescriptions, tutors } from "@/lib/db";
+import {
+  db,
+  attentions,
+  pets,
+  petHealthRecords,
+  prescriptions,
+  tutors,
+  hospitalizations,
+} from "@/lib/db";
 import { formatCurrency } from "@/lib/currency";
 import { formatDate, ageLabel, today } from "@/lib/dates";
 import {
@@ -20,6 +28,8 @@ import { Card } from "@/components/ui/card";
 import { ButtonLink } from "@/components/ui/button-link";
 import { DeleteButton } from "@/components/ui/delete-button";
 import { HealthRecordForm } from "@/components/clientes/health-record-form";
+import { NextVisitForm } from "@/components/clientes/next-visit-form";
+import { WeightChart } from "@/components/mascotas/weight-chart";
 
 export const metadata: Metadata = { title: "Mascota" };
 
@@ -68,10 +78,23 @@ export default async function MascotaPage({
     .orderBy(desc(prescriptions.date))
     .all();
 
+  const internaciones = db
+    .select({
+      id: hospitalizations.id,
+      admittedAt: hospitalizations.admittedAt,
+      dischargedAt: hospitalizations.dischargedAt,
+      status: hospitalizations.status,
+    })
+    .from(hospitalizations)
+    .where(eq(hospitalizations.petId, petId))
+    .orderBy(desc(hospitalizations.admittedAt), desc(hospitalizations.id))
+    .all();
+
   const todayIso = today();
   const facts = [
     SPECIES_LABELS[pet.species as Species] ?? pet.species,
     pet.breed,
+    pet.color,
     PET_SEX_LABELS[pet.sex as PetSex],
     pet.birthDate ? ageLabel(pet.birthDate) : null,
     pet.sterilized ? "Esterilizado/a" : null,
@@ -82,6 +105,8 @@ export default async function MascotaPage({
       <PageHeader
         title={pet.name}
         subtitle={facts.join(" · ")}
+        backHref={tutor ? `/clientes/${tutor.id}` : "/clientes"}
+        backLabel={tutor ? tutor.name : "Clientes"}
         action={
           <div className="flex items-center gap-2">
             <a
@@ -128,7 +153,34 @@ export default async function MascotaPage({
               {pet.microchip}
             </p>
           )}
+          {pet.allergies && (
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-amber-800">
+              <span className="font-medium">Alergias / condiciones: </span>
+              <span className="whitespace-pre-wrap">{pet.allergies}</span>
+            </p>
+          )}
           {pet.notes && <p className="whitespace-pre-wrap">{pet.notes}</p>}
+        </Card>
+
+        <Card className="space-y-3 p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-gray-900">Próxima visita</h2>
+            {pet.nextVisitDate && (
+              <span
+                className={`text-sm font-medium ${
+                  pet.nextVisitDate < todayIso ? "text-red-600" : "text-primary-700"
+                }`}
+              >
+                {formatDate(pet.nextVisitDate)}
+                {pet.nextVisitNote ? ` · ${pet.nextVisitNote}` : ""}
+              </span>
+            )}
+          </div>
+          <NextVisitForm
+            petId={petId}
+            date={pet.nextVisitDate}
+            note={pet.nextVisitNote}
+          />
         </Card>
 
         {weights.length > 0 && (
@@ -215,6 +267,43 @@ export default async function MascotaPage({
           )}
         </Card>
 
+        <Card className="space-y-3 p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-gray-900">Hospitalizaciones</h2>
+            <ButtonLink href={`/hospitalizaciones/nueva?pet=${pet.id}`} variant="secondary">
+              + Hospitalizar
+            </ButtonLink>
+          </div>
+          {internaciones.length === 0 ? (
+            <p className="text-sm text-gray-400">Sin hospitalizaciones.</p>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {internaciones.map((h) => (
+                <li key={h.id}>
+                  <Link
+                    href={`/hospitalizaciones/${h.id}`}
+                    className="flex items-center justify-between gap-2 py-2 text-sm hover:bg-gray-50"
+                  >
+                    <span className="min-w-0 truncate text-gray-700">
+                      Ingreso {formatDate(h.admittedAt)}
+                      {h.dischargedAt && (
+                        <span className="text-gray-400"> · alta {formatDate(h.dischargedAt)}</span>
+                      )}
+                    </span>
+                    <span
+                      className={`shrink-0 text-xs font-medium ${
+                        h.status === "activa" ? "text-amber-600" : "text-gray-400"
+                      }`}
+                    >
+                      {h.status === "activa" ? "Activa" : "Alta"}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
         <Card className="p-5">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="font-semibold text-gray-900">Historial clínico</h2>
@@ -249,29 +338,5 @@ export default async function MascotaPage({
         </Card>
       </div>
     </>
-  );
-}
-
-function WeightChart({ points }: { points: { date: string; grams: number }[] }) {
-  const max = Math.max(...points.map((p) => p.grams));
-  const min = Math.min(...points.map((p) => p.grams));
-  const span = max - min || 1;
-  return (
-    <ul className="space-y-2">
-      {points.map((p, i) => (
-        <li key={i} className="flex items-center gap-3 text-sm">
-          <span className="w-20 shrink-0 text-xs text-gray-500">{formatDate(p.date)}</span>
-          <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-100">
-            <div
-              className="h-full rounded-full bg-primary-500"
-              style={{ width: `${20 + ((p.grams - min) / span) * 80}%` }}
-            />
-          </div>
-          <span className="w-16 shrink-0 text-right font-medium text-gray-900 tabular-nums">
-            {(p.grams / 1000).toLocaleString("es-CL", { maximumFractionDigits: 2 })} kg
-          </span>
-        </li>
-      ))}
-    </ul>
   );
 }

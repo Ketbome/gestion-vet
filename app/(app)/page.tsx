@@ -2,6 +2,7 @@ import Link from "next/link";
 import { rangeFromSearchParams, formatDate } from "@/lib/dates";
 import { formatCurrency } from "@/lib/currency";
 import { getDashboardData } from "@/lib/queries/dashboard";
+import { getMonthlyReport } from "@/lib/queries/reports";
 import { getClinicMode } from "@/lib/settings";
 import { HEALTH_RECORD_TYPE_LABELS, type HealthRecordType } from "@/lib/constants";
 import { confirmAppointment, cancelAppointment } from "@/lib/actions/appointments";
@@ -12,6 +13,12 @@ import { StatCard } from "@/components/ui/stat-card";
 import { Icon } from "@/components/icons";
 import { DateRangeFilter } from "@/components/date-range-filter";
 import { OrderStatusBadge } from "@/components/pedidos/order-status-badge";
+import { RevenueTrend } from "@/components/dashboard/revenue-trend";
+
+const MONTH_SHORT = [
+  "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+  "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
+];
 
 const RANGE_LABELS: Record<string, string> = {
   hoy: "hoy",
@@ -30,6 +37,16 @@ export default async function DashboardPage({
   const data = getDashboardData(range);
   const periodo = RANGE_LABELS[range.rango] ?? "en el período";
   const mode = getClinicMode();
+
+  const trend = [...getMonthlyReport(6)]
+    .reverse()
+    .map((r) => {
+      const [year, month] = r.month.split("-").map(Number);
+      return {
+        label: `${MONTH_SHORT[(month ?? 1) - 1]} ${String(year).slice(2)}`,
+        income: r.income,
+      };
+    });
 
   return (
     <>
@@ -75,6 +92,13 @@ export default async function DashboardPage({
           />
         )}
       </div>
+
+      {trend.some((t) => t.income > 0) && (
+        <Card className="mt-4 p-5">
+          <h2 className="mb-3 font-semibold text-gray-900">Ingresos últimos meses</h2>
+          <RevenueTrend data={trend} />
+        </Card>
+      )}
 
       {data.lowStock.length > 0 && (
         <Card className="mt-4 border-amber-200 bg-amber-50 p-4">
@@ -169,6 +193,83 @@ export default async function DashboardPage({
                 </Link>
                 <span className="shrink-0 font-medium text-amber-800 tabular-nums">
                   {r.nextDueDate ? formatDate(r.nextDueDate) : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {mode === "completo" &&
+        (data.upcomingVisits.length > 0 || data.inactiveCount > 0) && (
+          <Card className="mt-4 border-primary-200 bg-primary-50/60 p-4">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-primary-800">
+                <Icon name="bell" className="h-5 w-5" />
+                <h2 className="font-semibold">Recordatorios</h2>
+              </div>
+              <Link
+                href="/recordatorios"
+                className="text-sm font-semibold text-primary-700 hover:underline"
+              >
+                Ver todos →
+              </Link>
+            </div>
+            {data.upcomingVisits.length > 0 ? (
+              <ul className="space-y-1">
+                {data.upcomingVisits.map((v) => (
+                  <li
+                    key={v.petId}
+                    className="flex items-center justify-between gap-2 text-sm"
+                  >
+                    <Link
+                      href={`/mascotas/${v.petId}`}
+                      className="min-w-0 truncate text-primary-900 hover:underline"
+                    >
+                      <strong className="font-medium">{v.petName}</strong>
+                      {" · "}
+                      {v.tutorName}
+                      {v.note ? <span className="text-primary-700"> · {v.note}</span> : null}
+                    </Link>
+                    <span className="shrink-0 text-primary-700 tabular-nums">
+                      {formatDate(v.date)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-primary-800">No hay controles próximos.</p>
+            )}
+            {data.inactiveCount > 0 && (
+              <Link
+                href="/recordatorios"
+                className="mt-3 inline-block text-sm font-medium text-primary-800 hover:underline"
+              >
+                {data.inactiveCount} mascota{data.inactiveCount === 1 ? "" : "s"} sin visita
+                hace +1 año →
+              </Link>
+            )}
+          </Card>
+        )}
+
+      {mode === "completo" && data.activeHospitalizations.length > 0 && (
+        <Card className="mt-4 border-primary-200 bg-primary-50 p-4">
+          <div className="mb-2 flex items-center gap-2 text-primary-800">
+            <Icon name="hospital" className="h-5 w-5" />
+            <h2 className="font-semibold">Pacientes hospitalizados</h2>
+          </div>
+          <ul className="space-y-1">
+            {data.activeHospitalizations.map((h) => (
+              <li key={h.id} className="flex items-center justify-between gap-2 text-sm">
+                <Link
+                  href={`/hospitalizaciones/${h.id}`}
+                  className="min-w-0 truncate text-primary-900 hover:underline"
+                >
+                  <strong className="font-medium">{h.petName}</strong>
+                  {h.tutorName ? ` · ${h.tutorName}` : ""}
+                </Link>
+                <span className="shrink-0 text-primary-700 tabular-nums">
+                  Ingreso {formatDate(h.admittedAt)}
                 </span>
               </li>
             ))}

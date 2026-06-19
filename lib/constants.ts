@@ -120,6 +120,15 @@ export const HEALTH_RECORD_TYPE_LABELS: Record<HealthRecordType, string> = {
   antiparasitario: "Antiparasitario",
 };
 
+export const HOSPITALIZATION_STATUSES = ["activa", "alta"] as const;
+
+export type HospitalizationStatus = (typeof HOSPITALIZATION_STATUSES)[number];
+
+export const HOSPITALIZATION_STATUS_LABELS: Record<HospitalizationStatus, string> = {
+  activa: "Activa",
+  alta: "Dada de alta",
+};
+
 export const USER_ROLES = ["admin", "veterinario", "recepcion"] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];

@@ -25,6 +25,18 @@ const COMPLETE_ITEMS: Item[] = [
     description: "Citas y calendario",
   },
   {
+    href: "/hospitalizaciones",
+    icon: "hospital",
+    label: "Hospitalización",
+    description: "Pacientes internados",
+  },
+  {
+    href: "/recordatorios",
+    icon: "bell",
+    label: "Recordatorios",
+    description: "Controles, vacunas e inactivos",
+  },
+  {
     href: "/pedidos",
     icon: "truck",
     label: "Pedidos",

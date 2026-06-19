@@ -4,6 +4,7 @@ import { getClinicMode } from "@/lib/settings";
 import type { UserRole } from "@/lib/constants";
 import { Sidebar } from "@/components/nav/sidebar";
 import { BottomNav } from "@/components/nav/bottom-nav";
+import { Header } from "@/components/nav/header";
 
 export default async function AppLayout({
   children,
@@ -19,6 +20,7 @@ export default async function AppLayout({
   return (
     <div className="min-h-dvh">
       <Sidebar mode={mode} role={role} />
+      <Header mode={mode} />
       <main className="px-4 pt-5 pb-24 md:pt-8 md:pb-10 md:pl-72 md:pr-8">
         <div className="mx-auto max-w-5xl">{children}</div>
       </main>

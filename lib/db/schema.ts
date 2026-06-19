@@ -169,6 +169,10 @@ export const pets = sqliteTable("pets", {
   birthDate: text("birth_date"),
   weightGrams: integer("weight_grams"),
   microchip: text("microchip"),
+  color: text("color"),
+  allergies: text("allergies"),
+  nextVisitDate: text("next_visit_date"),
+  nextVisitNote: text("next_visit_note"),
   sterilized: integer("sterilized", { mode: "boolean" }).notNull().default(false),
   notes: text("notes"),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
@@ -276,11 +280,65 @@ export const prescriptionItems = sqliteTable("prescription_items", {
   instructions: text("instructions"),
 });
 
+export const hospitalizations = sqliteTable("hospitalizations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  tutorId: integer("tutor_id").references(() => tutors.id),
+  vetId: integer("vet_id").references(() => users.id),
+  admittedAt: text("admitted_at").notNull(),
+  reason: text("reason"),
+  diagnosis: text("diagnosis"),
+  status: text("status").notNull().default("activa"),
+  dischargedAt: text("discharged_at"),
+  notes: text("notes"),
+  total: integer("total").notNull().default(0),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export const hospitalizationLogs = sqliteTable("hospitalization_logs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  hospitalizationId: integer("hospitalization_id")
+    .notNull()
+    .references(() => hospitalizations.id, { onDelete: "cascade" }),
+  date: text("date").notNull(),
+  weightGrams: integer("weight_grams"),
+  temperature: text("temperature"),
+  heartRate: integer("heart_rate"),
+  respRate: integer("resp_rate"),
+  treatment: text("treatment"),
+  notes: text("notes"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export const hospitalizationCharges = sqliteTable("hospitalization_charges", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  hospitalizationId: integer("hospitalization_id")
+    .notNull()
+    .references(() => hospitalizations.id, { onDelete: "cascade" }),
+  productId: integer("product_id").references(() => products.id),
+  description: text("description").notNull(),
+  quantity: integer("quantity").notNull().default(1),
+  unitPrice: integer("unit_price").notNull().default(0),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
 export const payments = sqliteTable("payments", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  attentionId: integer("attention_id")
-    .notNull()
-    .references(() => attentions.id, { onDelete: "cascade" }),
+  attentionId: integer("attention_id").references(() => attentions.id, {
+    onDelete: "cascade",
+  }),
+  hospitalizationId: integer("hospitalization_id").references(
+    () => hospitalizations.id,
+    { onDelete: "cascade" }
+  ),
   amount: integer("amount").notNull().default(0),
   method: text("method").notNull().default("efectivo"),
   date: text("date").notNull(),
@@ -308,3 +366,6 @@ export type VetSchedule = typeof vetSchedules.$inferSelect;
 export type Prescription = typeof prescriptions.$inferSelect;
 export type PrescriptionItem = typeof prescriptionItems.$inferSelect;
 export type Payment = typeof payments.$inferSelect;
+export type Hospitalization = typeof hospitalizations.$inferSelect;
+export type HospitalizationLog = typeof hospitalizationLogs.$inferSelect;
+export type HospitalizationCharge = typeof hospitalizationCharges.$inferSelect;

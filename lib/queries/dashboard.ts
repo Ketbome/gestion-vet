@@ -1,4 +1,4 @@
-import { and, asc, between, desc, eq, gt, lte, ne, notInArray, sql } from "drizzle-orm";
+import { and, asc, between, desc, eq, gt, isNotNull, lte, ne, notInArray, sql } from "drizzle-orm";
 import {
   db,
   attentions,
@@ -12,6 +12,7 @@ import {
   products,
   services,
   tutors,
+  hospitalizations,
 } from "@/lib/db";
 import { addDays, today, type DateRange } from "@/lib/dates";
 
@@ -143,6 +144,55 @@ export function getDashboardData(range: DateRange) {
     .orderBy(asc(appointments.time))
     .all();
 
+  // Próximos controles agendados (vencidos o dentro de 14 días)
+  const upcomingVisits = db
+    .select({
+      petId: pets.id,
+      petName: pets.name,
+      tutorName: tutors.name,
+      date: sql<string>`${pets.nextVisitDate}`,
+      note: pets.nextVisitNote,
+    })
+    .from(pets)
+    .innerJoin(tutors, eq(pets.tutorId, tutors.id))
+    .where(
+      and(
+        eq(pets.active, true),
+        isNotNull(pets.nextVisitDate),
+        lte(pets.nextVisitDate, addDays(todayIso, 14))
+      )
+    )
+    .orderBy(asc(pets.nextVisitDate))
+    .limit(8)
+    .all();
+
+  // Conteo de mascotas activas sin visitas hace más de un año
+  const [{ inactiveCount }] = db.all<{ inactiveCount: number }>(sql`
+    select count(*) as inactiveCount from (
+      select p.id from ${pets} p
+      join ${attentions} a on a.pet_id = p.id
+      where p.active = 1
+      group by p.id
+      having max(a.date) < ${addDays(todayIso, -365)}
+         and coalesce(p.next_visit_date, '') < ${todayIso}
+    )
+  `);
+
+  // Pacientes actualmente hospitalizados
+  const activeHospitalizations = db
+    .select({
+      id: hospitalizations.id,
+      admittedAt: hospitalizations.admittedAt,
+      petName: pets.name,
+      tutorName: tutors.name,
+    })
+    .from(hospitalizations)
+    .innerJoin(pets, eq(hospitalizations.petId, pets.id))
+    .leftJoin(tutors, eq(hospitalizations.tutorId, tutors.id))
+    .where(eq(hospitalizations.status, "activa"))
+    .orderBy(asc(hospitalizations.admittedAt))
+    .all();
+
   return {
     income,
     attentionCount,
@@ -155,6 +205,9 @@ export function getDashboardData(range: DateRange) {
     pendingOrders,
     upcomingDue,
     pendingConfirmations,
+    activeHospitalizations,
+    upcomingVisits,
+    inactiveCount,
     receivable,
   };
 }

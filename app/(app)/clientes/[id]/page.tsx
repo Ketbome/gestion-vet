@@ -55,6 +55,8 @@ export default async function ClientePage({
       <PageHeader
         title={tutor.name}
         subtitle={[tutor.phone, tutor.email].filter(Boolean).join(" · ") || undefined}
+        backHref="/clientes"
+        backLabel="Clientes"
         action={
           <div className="flex items-center gap-2">
             <ButtonLink href={`/clientes/${tutor.id}/editar`} variant="secondary">

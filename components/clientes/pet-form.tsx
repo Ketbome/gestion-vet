@@ -109,6 +109,24 @@ export function PetForm({
             />
           </div>
         </div>
+        <div>
+          <Label htmlFor="color">Color / pelaje (opcional)</Label>
+          <Input
+            id="color"
+            name="color"
+            defaultValue={pet?.color ?? ""}
+            placeholder="Ej: Negro con manchas blancas"
+          />
+        </div>
+        <div>
+          <Label htmlFor="allergies">Alergias / condiciones (opcional)</Label>
+          <Textarea
+            id="allergies"
+            name="allergies"
+            defaultValue={pet?.allergies ?? ""}
+            placeholder="Alergias conocidas, condiciones crónicas…"
+          />
+        </div>
         <label className="flex items-center gap-3">
           <input
             type="checkbox"
@@ -124,7 +142,7 @@ export function PetForm({
             id="notes"
             name="notes"
             defaultValue={pet?.notes ?? ""}
-            placeholder="Alergias, condiciones, observaciones…"
+            placeholder="Observaciones generales…"
           />
         </div>
         <FormError message={state.error} />

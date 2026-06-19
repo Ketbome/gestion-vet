@@ -146,6 +146,22 @@ export function AttentionForm({
             placeholder="Diagnóstico, indicaciones, próximos controles…"
           />
         </div>
+        {mode === "completo" && (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="nextVisitDate">Próximo control (opcional)</Label>
+              <Input id="nextVisitDate" name="nextVisitDate" type="date" />
+            </div>
+            <div>
+              <Label htmlFor="nextVisitNote">Motivo del control (opcional)</Label>
+              <Input
+                id="nextVisitNote"
+                name="nextVisitNote"
+                placeholder="Ej: control post-operatorio"
+              />
+            </div>
+          </div>
+        )}
       </Card>
 
       {mode === "completo" && (

@@ -116,6 +116,8 @@ export default async function AtencionPage({
       <PageHeader
         title={attention.petName}
         subtitle={`${attention.ownerName} · ${formatDate(attention.date)}`}
+        backHref="/atenciones"
+        backLabel="Atenciones"
         action={
           <DeleteButton
             action={deleteAttention.bind(null, attention.id)}

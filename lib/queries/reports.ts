@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { db, attentions, expenses } from "@/lib/db";
+import { db, attentions, expenses, payments } from "@/lib/db";
 
 export type MonthlyReport = {
   month: string; // YYYY-MM
@@ -7,6 +7,28 @@ export type MonthlyReport = {
   expenses: number;
   profit: number;
 };
+
+export type Breakdown = { key: string; total: number };
+
+export function getPaymentMethodBreakdown(): Breakdown[] {
+  return db.all<Breakdown>(sql`
+    select method as key, sum(amount) as total
+    from ${payments}
+    group by method
+    having total > 0
+    order by total desc
+  `);
+}
+
+export function getExpenseCategoryBreakdown(): Breakdown[] {
+  return db.all<Breakdown>(sql`
+    select category as key, sum(amount) as total
+    from ${expenses}
+    group by category
+    having total > 0
+    order by total desc
+  `);
+}
 
 export function getMonthlyReport(months = 12): MonthlyReport[] {
   const incomeRows = db.all<{ month: string; total: number }>(sql`
