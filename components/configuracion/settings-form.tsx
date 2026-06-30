@@ -20,6 +20,7 @@ export function SettingsForm({
     {}
   );
   const [mode, setMode] = useState(settings.clinicMode);
+  const [ivaEnabled, setIvaEnabled] = useState(settings.ivaEnabled);
   const [preview, setPreview] = useState<string | null>(settings.logo);
   const [logoField, setLogoField] = useState("");
 
@@ -128,6 +129,41 @@ export function SettingsForm({
 
         <p className="text-xs text-gray-400">
           Moneda: {currency} (configurada por variable de entorno)
+        </p>
+      </Card>
+
+      <Card className="space-y-4 p-5">
+        <h2 className="font-semibold text-gray-900">Impuestos (IVA)</h2>
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            name="ivaEnabled"
+            checked={ivaEnabled}
+            onChange={(e) => setIvaEnabled(e.target.checked)}
+            className="h-4 w-4"
+          />
+          <span className="text-sm text-gray-700">
+            Los precios incluyen IVA (mostrar ingresos netos en reportes)
+          </span>
+        </label>
+        {ivaEnabled && (
+          <div>
+            <Label htmlFor="ivaRate">Tasa de IVA (%)</Label>
+            <Input
+              id="ivaRate"
+              name="ivaRate"
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              defaultValue={settings.ivaRate}
+              className="w-32"
+            />
+          </div>
+        )}
+        <p className="text-xs text-gray-400">
+          Los montos se guardan con IVA incluido. El neto y el IVA se calculan en
+          los reportes.
         </p>
       </Card>
 

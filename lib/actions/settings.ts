@@ -24,6 +24,11 @@ export async function updateSettings(
   const clinicPhone = String(formData.get("clinicPhone") ?? "").trim() || null;
   const clinicEmail = String(formData.get("clinicEmail") ?? "").trim() || null;
   const slotMinutes = Math.round(Number(formData.get("slotMinutes") ?? 30)) || 30;
+  const ivaEnabled = formData.get("ivaEnabled") === "on";
+  const ivaRate = Math.min(
+    100,
+    Math.max(0, Math.round(Number(formData.get("ivaRate") ?? 19)))
+  );
   const logoRaw = String(formData.get("logo") ?? "");
   // El logo viaja como data URL base64; vacío = mantener, "remove" = borrar
   const logo =
@@ -48,6 +53,8 @@ export async function updateSettings(
     clinicPhone,
     clinicEmail,
     slotMinutes,
+    ivaEnabled,
+    ivaRate,
     ...(logo !== undefined ? { logo } : {}),
   };
 

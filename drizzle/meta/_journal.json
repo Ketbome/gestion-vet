@@ -64,6 +64,13 @@
       "when": 1781886921592,
       "tag": "0008_closed_hercules",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1782855807676,
+      "tag": "0009_ancient_prowler",
+      "breakpoints": true
     }
   ]
 }

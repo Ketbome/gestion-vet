@@ -11,6 +11,7 @@ import {
   type PaymentMethod,
   type ExpenseCategory,
 } from "@/lib/constants";
+import { getSettings } from "@/lib/settings";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -30,6 +31,7 @@ function shortMonth(yyyyMm: string): string {
 }
 
 export default function ReportesPage() {
+  const settings = getSettings();
   const report = getMonthlyReport(12);
   const totals = report.reduce(
     (acc, r) => ({
@@ -38,6 +40,13 @@ export default function ReportesPage() {
     }),
     { income: 0, expenses: 0 }
   );
+
+  // Los precios se guardan con IVA incluido: el neto se deriva dividiendo.
+  const netIncome = settings.ivaEnabled
+    ? Math.round(totals.income / (1 + settings.ivaRate / 100))
+    : totals.income;
+  const ivaIncluded = totals.income - netIncome;
+  const netProfit = netIncome - totals.expenses;
 
   // Recharts: cronológico ascendente (el query viene descendente)
   const monthly = [...report]
@@ -99,6 +108,39 @@ export default function ReportesPage() {
               </p>
             </Card>
           </div>
+
+          {settings.ivaEnabled && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <Card className="p-4">
+                <p className="text-xs font-medium text-gray-500 uppercase">
+                  Ingresos netos (sin IVA)
+                </p>
+                <p className="mt-1 text-xl font-bold text-emerald-600 tabular-nums">
+                  {formatCurrency(netIncome)}
+                </p>
+              </Card>
+              <Card className="p-4">
+                <p className="text-xs font-medium text-gray-500 uppercase">
+                  IVA incluido ({settings.ivaRate}%)
+                </p>
+                <p className="mt-1 text-xl font-bold text-gray-700 tabular-nums">
+                  {formatCurrency(ivaIncluded)}
+                </p>
+              </Card>
+              <Card className="p-4">
+                <p className="text-xs font-medium text-gray-500 uppercase">
+                  Ganancia neta (sin IVA)
+                </p>
+                <p
+                  className={`mt-1 text-xl font-bold tabular-nums ${
+                    netProfit >= 0 ? "text-primary-700" : "text-red-600"
+                  }`}
+                >
+                  {formatCurrency(netProfit)}
+                </p>
+              </Card>
+            </div>
+          )}
 
           <Card className="p-5">
             <h2 className="mb-3 font-semibold text-gray-900">Ingresos vs gastos</h2>

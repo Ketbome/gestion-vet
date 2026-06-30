@@ -130,6 +130,8 @@ export const settings = sqliteTable("settings", {
     .default(false),
   bookingHoursNote: text("booking_hours_note"),
   slotMinutes: integer("slot_minutes").notNull().default(30),
+  ivaEnabled: integer("iva_enabled", { mode: "boolean" }).notNull().default(true),
+  ivaRate: integer("iva_rate").notNull().default(19),
   logo: text("logo"),
   clinicRut: text("clinic_rut"),
   clinicAddress: text("clinic_address"),
