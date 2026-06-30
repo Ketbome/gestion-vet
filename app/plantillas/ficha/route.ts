@@ -46,19 +46,19 @@ export async function GET() {
   section("Datos del paciente");
 
   const y0 = ctx.y;
-  field("Nombre de la mascota", margin, y0, 160);
-  field("Especie", margin + 180, y0, 90);
-  field("Raza", margin + 290, y0, 110);
-  field("Sexo", margin + 420, y0, 60);
-  field("Color / Pelaje", margin + 500, y0, inner - 500);
+  field("Nombre de la mascota", margin,       y0, 150);
+  field("Especie",              margin + 158, y0, 80);
+  field("Raza",                 margin + 246, y0, 100);
+  field("Sexo",                 margin + 354, y0, 60);
+  field("Color / Pelaje",       margin + 422, y0, 73);
   ctx.gap(28);
 
   const y1 = ctx.y;
-  field("Fecha de nacimiento", margin, y1, 110);
-  field("Edad", margin + 130, y1, 70);
-  field("Peso (kg)", margin + 220, y1, 70);
-  field("Microchip / Tatuaje", margin + 310, y1, 130);
-  field("Castrado/a", margin + 460, y1, inner - 460);
+  field("Fecha de nacimiento", margin,       y1, 105);
+  field("Edad",                margin + 113, y1, 60);
+  field("Peso (kg)",           margin + 181, y1, 60);
+  field("Microchip / Tatuaje", margin + 249, y1, 130);
+  field("Castrado/a",          margin + 387, y1, 108);
   ctx.gap(30);
 
   ctx.hr();
@@ -66,10 +66,10 @@ export async function GET() {
   section("Datos del tutor");
 
   const y2 = ctx.y;
-  field("Nombre completo", margin, y2, 200);
-  field("RUT", margin + 220, y2, 100);
-  field("Telefono", margin + 340, y2, 110);
-  field("Email", margin + 470, y2, inner - 470);
+  field("Nombre completo", margin,       y2, 185);
+  field("RUT",             margin + 193, y2, 90);
+  field("Telefono",        margin + 291, y2, 100);
+  field("Email",           margin + 399, y2, 96);
   ctx.gap(28);
 
   const y3 = ctx.y;
@@ -86,11 +86,11 @@ export async function GET() {
   section("Anamnesis");
 
   const y4 = ctx.y;
-  field("Duracion de los sintomas", margin, y4, 150);
-  field("Progresion", margin + 170, y4, 120);
-  field("Apetito", margin + 310, y4, 80);
-  field("Agua", margin + 410, y4, 60);
-  field("Deposiciones", margin + 490, y4, inner - 490);
+  field("Duracion de los sintomas", margin,       y4, 130);
+  field("Progresion",               margin + 138, y4, 90);
+  field("Apetito",                  margin + 236, y4, 70);
+  field("Agua",                     margin + 314, y4, 65);
+  field("Deposiciones",             margin + 387, y4, 108);
   ctx.gap(28);
 
   const y5 = ctx.y;

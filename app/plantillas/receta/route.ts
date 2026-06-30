@@ -56,11 +56,11 @@ export async function GET() {
   ctx.gap(16);
 
   const cols = [
-    { label: "Medicamento / Producto", x: margin, w: 180 },
-    { label: "Dosis", x: margin + 190, w: 70 },
-    { label: "Frecuencia", x: margin + 270, w: 90 },
-    { label: "Duracion", x: margin + 370, w: 80 },
-    { label: "Instrucciones", x: margin + 460, w: inner - 460 },
+    { label: "Medicamento / Producto", x: margin,       w: 155 },
+    { label: "Dosis",                  x: margin + 162, w: 65  },
+    { label: "Frecuencia",             x: margin + 234, w: 82  },
+    { label: "Duracion",               x: margin + 323, w: 72  },
+    { label: "Instrucciones",          x: margin + 402, w: 93  },
   ];
 
   for (const col of cols) {

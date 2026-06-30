@@ -34,10 +34,10 @@ export async function GET() {
   ctx.gap(28);
 
   const y1 = ctx.y;
-  field("Tutor / Propietario", margin, y1, 200);
-  field("Telefono", margin + 220, y1, 120);
-  field("Fecha de nacimiento", margin + 360, y1, 100);
-  field("Microchip", margin + 480, y1, inner - 480);
+  field("Tutor / Propietario", margin, y1, 185);
+  field("Telefono", margin + 193, y1, 105);
+  field("Fecha de nacimiento", margin + 306, y1, 100);
+  field("Microchip", margin + 414, y1, 81);
   ctx.gap(32);
 
   ctx.hr();
@@ -46,11 +46,11 @@ export async function GET() {
   ctx.gap(16);
 
   const cols = [
-    { label: "Vacuna / Producto", x: margin, w: 160 },
-    { label: "Laboratorio / Lote", x: margin + 170, w: 130 },
-    { label: "Fecha aplicacion", x: margin + 310, w: 100 },
-    { label: "Proxima dosis", x: margin + 420, w: 90 },
-    { label: "Firma / Sello", x: margin + 520, w: inner - 520 },
+    { label: "Vacuna / Producto",   x: margin,       w: 140 },
+    { label: "Laboratorio / Lote",  x: margin + 148, w: 100 },
+    { label: "Fecha aplicacion",    x: margin + 256, w: 82  },
+    { label: "Proxima dosis",       x: margin + 346, w: 79  },
+    { label: "Firma / Sello",       x: margin + 433, w: 62  },
   ];
 
   for (const col of cols) {
@@ -84,11 +84,11 @@ export async function GET() {
   ctx.gap(16);
 
   const cols2 = [
-    { label: "Producto", x: margin, w: 170 },
-    { label: "Via", x: margin + 180, w: 80 },
-    { label: "Fecha", x: margin + 270, w: 100 },
-    { label: "Proxima", x: margin + 380, w: 100 },
-    { label: "Firma / Sello", x: margin + 490, w: inner - 490 },
+    { label: "Producto",      x: margin,       w: 148 },
+    { label: "Via",           x: margin + 156, w: 60  },
+    { label: "Fecha",         x: margin + 224, w: 82  },
+    { label: "Proxima",       x: margin + 314, w: 82  },
+    { label: "Firma / Sello", x: margin + 404, w: 91  },
   ];
 
   for (const col of cols2) {
