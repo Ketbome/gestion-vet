@@ -46,6 +46,12 @@ const COMPLETE_ITEMS: Item[] = [
 
 const BASE_ITEMS: Item[] = [
   {
+    href: "/plantillas",
+    icon: "document",
+    label: "Plantillas",
+    description: "Formularios en blanco para imprimir",
+  },
+  {
     href: "/servicios",
     icon: "tag",
     label: "Servicios",
