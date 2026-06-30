@@ -66,16 +66,14 @@ export async function GET() {
   });
   ctx.gap(10);
 
-  for (let i = 0; i < 12; i++) {
-    for (const col of cols) {
-      page.drawLine({
-        start: { x: col.x, y: ctx.y - 6 },
-        end: { x: col.x + col.w - 4, y: ctx.y - 6 },
-        thickness: 0.4,
-        color: lightGray,
-      });
-    }
-    ctx.gap(22);
+  for (let i = 0; i < 7; i++) {
+    ctx.gap(50);
+    page.drawLine({
+      start: { x: margin, y: ctx.y + 4 },
+      end: { x: width - margin, y: ctx.y + 4 },
+      thickness: 0.4,
+      color: lightGray,
+    });
   }
 
   ctx.hr();
@@ -104,16 +102,14 @@ export async function GET() {
   });
   ctx.gap(10);
 
-  for (let i = 0; i < 6; i++) {
-    for (const col of cols2) {
-      page.drawLine({
-        start: { x: col.x, y: ctx.y - 6 },
-        end: { x: col.x + col.w - 4, y: ctx.y - 6 },
-        thickness: 0.4,
-        color: lightGray,
-      });
-    }
-    ctx.gap(22);
+  for (let i = 0; i < 5; i++) {
+    ctx.gap(30);
+    page.drawLine({
+      start: { x: margin, y: ctx.y + 4 },
+      end: { x: width - margin, y: ctx.y + 4 },
+      thickness: 0.4,
+      color: lightGray,
+    });
   }
 
   return pdfResponse(await ctx.bytes(), "plantilla-carnet.pdf");
