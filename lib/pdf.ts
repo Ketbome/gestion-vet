@@ -3,8 +3,10 @@ import "server-only";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { getSettings } from "@/lib/settings";
 
-const PAGE_W = 595.28;
-const PAGE_H = 841.89;
+const SIZES = {
+  a4: { w: 595.28, h: 841.89 },
+  a5: { w: 419.53, h: 595.28 },
+};
 const MARGIN = 50;
 const gray = rgb(0.45, 0.45, 0.45);
 const black = rgb(0.1, 0.1, 0.1);
@@ -33,7 +35,8 @@ export type PdfCtx = {
   margin: number;
 };
 
-export async function startPdf(title: string): Promise<PdfCtx> {
+export async function startPdf(title: string, size: "a4" | "a5" = "a4"): Promise<PdfCtx> {
+  const { w: PAGE_W, h: PAGE_H } = SIZES[size];
   const settings = getSettings();
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);

@@ -7,78 +7,75 @@ export const dynamic = "force-dynamic";
 
 const lightGray = rgb(0.75, 0.75, 0.75);
 
-function drawField(
-  page: ReturnType<typeof Object.create>,
-  label: string,
-  x: number,
-  y: number,
-  width: number,
-  font: import("pdf-lib").PDFFont,
-  boldFont: import("pdf-lib").PDFFont
-) {
-  page.drawText(label, { x, y: y + 2, size: 8, font, color: rgb(0.45, 0.45, 0.45) });
-  page.drawLine({
-    start: { x, y: y - 8 },
-    end: { x: x + width, y: y - 8 },
-    thickness: 0.5,
-    color: lightGray,
-  });
-}
-
-export async function GET() {
+export async function GET(req: Request) {
   if (!(await verifySession())) return new Response("No autorizado", { status: 401 });
 
-  const ctx = await startPdf("Receta Medica Veterinaria");
+  const url = new URL(req.url);
+  const size = url.searchParams.get("size") === "a5" ? "a5" : "a4";
+
+  const ctx = await startPdf("Receta Medica Veterinaria", size);
   const { page, font, bold, margin, width } = ctx;
   const inner = width - margin * 2;
+  const S = inner / 495;
 
-  const field = (label: string, x: number, y: number, w: number) =>
-    drawField(page, label, x, y, w, font, bold);
+  const sc = (n: number) => Math.round(n * S);
+  const gray = rgb(0.45, 0.45, 0.45);
+  const black = rgb(0.1, 0.1, 0.1);
+
+  const field = (label: string, x: number, y: number, w: number) => {
+    page.drawText(label, { x, y: y + 2, size: 8, font, color: gray });
+    page.drawLine({
+      start: { x, y: y - 8 },
+      end: { x: x + w, y: y - 8 },
+      thickness: 0.5,
+      color: lightGray,
+    });
+  };
 
   const y0 = ctx.y;
-
-  field("Fecha", margin, y0, 120);
-  field("Mascota", margin + 140, y0, 180);
-  field("Tutor / Propietario", margin + 340, y0, inner - 340);
+  field("Fecha",               margin,            y0, sc(120));
+  field("Mascota",             margin + sc(140),  y0, sc(180));
+  field("Tutor / Propietario", margin + sc(340),  y0, sc(155));
   ctx.gap(28);
 
   const y1 = ctx.y;
-  field("Especie", margin, y1, 100);
-  field("Raza", margin + 120, y1, 130);
-  field("Sexo", margin + 270, y1, 60);
-  field("Edad", margin + 350, y1, 60);
-  field("Peso", margin + 430, y1, inner - 430);
+  field("Especie",  margin,            y1, sc(100));
+  field("Raza",     margin + sc(110),  y1, sc(130));
+  field("Sexo",     margin + sc(250),  y1, sc(60));
+  field("Edad",     margin + sc(320),  y1, sc(60));
+  field("Peso",     margin + sc(390),  y1, sc(105));
   ctx.gap(30);
 
   ctx.hr();
   ctx.gap(6);
-  page.drawText("Medicamentos prescritos", { x: margin, y: ctx.y, size: 10, font: bold, color: rgb(0.1, 0.1, 0.1) });
+  page.drawText("Medicamentos prescritos", { x: margin, y: ctx.y, size: 10, font: bold, color: black });
   ctx.gap(16);
 
   const cols = [
-    { label: "Medicamento / Producto", x: margin,       w: 155 },
-    { label: "Dosis",                  x: margin + 162, w: 65  },
-    { label: "Frecuencia",             x: margin + 234, w: 82  },
-    { label: "Duracion",               x: margin + 323, w: 72  },
-    { label: "Instrucciones",          x: margin + 402, w: 93  },
+    { label: "Medicamento / Producto", offset: 0,        w: sc(155) },
+    { label: "Dosis",                  offset: sc(162),  w: sc(65)  },
+    { label: "Frecuencia",             offset: sc(234),  w: sc(82)  },
+    { label: "Duracion",               offset: sc(323),  w: sc(72)  },
+    { label: "Instrucciones",          offset: sc(402),  w: sc(93)  },
   ];
 
   for (const col of cols) {
     page.drawText(col.label, {
-      x: col.x,
+      x: margin + col.offset,
       y: ctx.y,
       size: 8,
       font: bold,
-      color: rgb(0.45, 0.45, 0.45),
+      color: gray,
     });
   }
   ctx.gap(14);
 
-  for (let i = 0; i < 8; i++) {
+  const medRows = size === "a5" ? 6 : 8;
+  for (let i = 0; i < medRows; i++) {
     for (const col of cols) {
       page.drawLine({
-        start: { x: col.x, y: ctx.y - 4 },
-        end: { x: col.x + col.w - 4, y: ctx.y - 4 },
+        start: { x: margin + col.offset, y: ctx.y - 4 },
+        end: { x: margin + col.offset + col.w - 4, y: ctx.y - 4 },
         thickness: 0.4,
         color: lightGray,
       });
@@ -88,10 +85,11 @@ export async function GET() {
 
   ctx.hr();
   ctx.gap(6);
-  page.drawText("Indicaciones generales", { x: margin, y: ctx.y, size: 10, font: bold, color: rgb(0.1, 0.1, 0.1) });
+  page.drawText("Indicaciones generales", { x: margin, y: ctx.y, size: 10, font: bold, color: black });
   ctx.gap(16);
 
-  for (let i = 0; i < 4; i++) {
+  const noteRows = size === "a5" ? 3 : 4;
+  for (let i = 0; i < noteRows; i++) {
     page.drawLine({
       start: { x: margin, y: ctx.y - 4 },
       end: { x: width - margin, y: ctx.y - 4 },
@@ -101,15 +99,15 @@ export async function GET() {
     ctx.gap(18);
   }
 
-  ctx.gap(40);
+  ctx.gap(30);
   ctx.hr();
   page.drawText("Firma y sello del medico veterinario", {
     x: margin,
     y: ctx.y - 2,
     size: 9,
     font,
-    color: rgb(0.45, 0.45, 0.45),
+    color: gray,
   });
 
-  return pdfResponse(await ctx.bytes(), "plantilla-receta.pdf");
+  return pdfResponse(await ctx.bytes(), `plantilla-receta-${size}.pdf`);
 }
