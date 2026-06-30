@@ -5,7 +5,7 @@ import { Icon } from "@/components/icons";
 
 export const metadata: Metadata = { title: "Plantillas" };
 
-const TEMPLATES = [
+const TEMPLATES: { base: string; label: string; description: string; single?: boolean }[] = [
   {
     base: "/plantillas/receta",
     label: "Receta médica en blanco",
@@ -15,6 +15,12 @@ const TEMPLATES = [
     base: "/plantillas/carnet",
     label: "Carnet de vacunación en blanco",
     description: "Tabla de vacunas y desparasitaciones con espacio para el papel",
+  },
+  {
+    base: "/plantillas/carnet-libreta",
+    label: "Carnet libreta (A4 doblado)",
+    description: "Portada + interior en una hoja A4. Imprimir doble cara y doblar por la mitad.",
+    single: true,
   },
   {
     base: "/plantillas/ficha",
@@ -46,16 +52,26 @@ export default function PlantillasPage() {
                 <span className="block font-semibold text-gray-900">{t.label}</span>
                 <span className="block text-sm text-gray-500">{t.description}</span>
                 <div className="mt-3 flex gap-2">
-                  {SIZES.map((s) => (
+                  {t.single ? (
                     <a
-                      key={s.param}
-                      href={`${t.base}${s.param}`}
+                      href={t.base}
                       className="inline-flex flex-col items-center rounded-lg border border-primary-200 bg-primary-50 px-4 py-2 text-primary-700 transition hover:bg-primary-100"
                     >
-                      <span className="text-sm font-semibold">{s.label}</span>
-                      <span className="text-xs text-primary-500">{s.sub}</span>
+                      <span className="text-sm font-semibold">↓ PDF</span>
+                      <span className="text-xs text-primary-500">A4 landscape</span>
                     </a>
-                  ))}
+                  ) : (
+                    SIZES.map((s) => (
+                      <a
+                        key={s.param}
+                        href={`${t.base}${s.param}`}
+                        className="inline-flex flex-col items-center rounded-lg border border-primary-200 bg-primary-50 px-4 py-2 text-primary-700 transition hover:bg-primary-100"
+                      >
+                        <span className="text-sm font-semibold">{s.label}</span>
+                        <span className="text-xs text-primary-500">{s.sub}</span>
+                      </a>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
