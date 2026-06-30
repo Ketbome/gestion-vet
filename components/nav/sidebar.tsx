@@ -43,6 +43,9 @@ export function Sidebar({ mode, role }: { mode: ClinicMode; role: UserRole }) {
         <SidebarLink href="/pedidos" icon="truck">
           Pedidos
         </SidebarLink>
+        <SidebarLink href="/plantillas" icon="document">
+          Plantillas
+        </SidebarLink>
         <SidebarLink href="/servicios" icon="tag">
           Servicios
         </SidebarLink>
