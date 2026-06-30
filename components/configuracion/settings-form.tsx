@@ -155,7 +155,7 @@ export function SettingsForm({
               type="number"
               min={0}
               max={100}
-              step={1}
+              step={0.01}
               defaultValue={settings.ivaRate}
               className="w-32"
             />

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const products = sqliteTable("products", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -131,7 +131,7 @@ export const settings = sqliteTable("settings", {
   bookingHoursNote: text("booking_hours_note"),
   slotMinutes: integer("slot_minutes").notNull().default(30),
   ivaEnabled: integer("iva_enabled", { mode: "boolean" }).notNull().default(true),
-  ivaRate: integer("iva_rate").notNull().default(19),
+  ivaRate: real("iva_rate").notNull().default(19),
   logo: text("logo"),
   clinicRut: text("clinic_rut"),
   clinicAddress: text("clinic_address"),

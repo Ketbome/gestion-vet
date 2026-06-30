@@ -27,7 +27,7 @@ export async function updateSettings(
   const ivaEnabled = formData.get("ivaEnabled") === "on";
   const ivaRate = Math.min(
     100,
-    Math.max(0, Math.round(Number(formData.get("ivaRate") ?? 19)))
+    Math.max(0, Math.round(Number(formData.get("ivaRate") ?? 19) * 100) / 100)
   );
   const logoRaw = String(formData.get("logo") ?? "");
   // El logo viaja como data URL base64; vacío = mantener, "remove" = borrar
