@@ -5,7 +5,7 @@ import { Icon } from "@/components/icons";
 
 export const metadata: Metadata = { title: "Plantillas" };
 
-const TEMPLATES: { base: string; label: string; description: string; single?: boolean }[] = [
+const TEMPLATES = [
   {
     base: "/plantillas/receta",
     label: "Receta médica en blanco",
@@ -18,9 +18,8 @@ const TEMPLATES: { base: string; label: string; description: string; single?: bo
   },
   {
     base: "/plantillas/carnet-libreta",
-    label: "Carnet libreta (A4 doblado)",
-    description: "Portada + interior en una hoja A4. Imprimir doble cara y doblar por la mitad.",
-    single: true,
+    label: "Carnet libreta (doblar por la mitad)",
+    description: "Portada + interior. Imprimir doble cara y doblar por la línea punteada.",
   },
   {
     base: "/plantillas/ficha",
@@ -31,7 +30,7 @@ const TEMPLATES: { base: string; label: string; description: string; single?: bo
 
 const SIZES = [
   { param: "", label: "A4", sub: "21×29.7 cm" },
-  { param: "?size=a5", label: "A5", sub: "14×21 cm" },
+  { param: "?size=a5", label: "14×21", sub: "A5" },
 ];
 
 export default function PlantillasPage() {
@@ -52,26 +51,16 @@ export default function PlantillasPage() {
                 <span className="block font-semibold text-gray-900">{t.label}</span>
                 <span className="block text-sm text-gray-500">{t.description}</span>
                 <div className="mt-3 flex gap-2">
-                  {t.single ? (
+                  {SIZES.map((s) => (
                     <a
-                      href={t.base}
+                      key={s.param}
+                      href={`${t.base}${s.param}`}
                       className="inline-flex flex-col items-center rounded-lg border border-primary-200 bg-primary-50 px-4 py-2 text-primary-700 transition hover:bg-primary-100"
                     >
-                      <span className="text-sm font-semibold">↓ PDF</span>
-                      <span className="text-xs text-primary-500">A4 landscape</span>
+                      <span className="text-sm font-semibold">{s.label}</span>
+                      <span className="text-xs text-primary-500">{s.sub}</span>
                     </a>
-                  ) : (
-                    SIZES.map((s) => (
-                      <a
-                        key={s.param}
-                        href={`${t.base}${s.param}`}
-                        className="inline-flex flex-col items-center rounded-lg border border-primary-200 bg-primary-50 px-4 py-2 text-primary-700 transition hover:bg-primary-100"
-                      >
-                        <span className="text-sm font-semibold">{s.label}</span>
-                        <span className="text-xs text-primary-500">{s.sub}</span>
-                      </a>
-                    ))
-                  )}
+                  ))}
                 </div>
               </div>
             </div>
