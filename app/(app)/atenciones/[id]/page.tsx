@@ -119,12 +119,22 @@ export default async function AtencionPage({
         backHref="/atenciones"
         backLabel="Atenciones"
         action={
-          <DeleteButton
-            action={deleteAttention.bind(null, attention.id)}
-            confirmMessage="¿Eliminar esta atención? El stock de los productos vendidos se devolverá al inventario."
-          >
-            Eliminar atención
-          </DeleteButton>
+          <div className="flex items-center gap-2">
+            {!complete && (
+              <ButtonLink
+                href={`/atenciones/${attention.id}/editar`}
+                variant="secondary"
+              >
+                Editar
+              </ButtonLink>
+            )}
+            <DeleteButton
+              action={deleteAttention.bind(null, attention.id)}
+              confirmMessage="¿Eliminar esta atención? El stock de los productos vendidos se devolverá al inventario."
+            >
+              Eliminar atención
+            </DeleteButton>
+          </div>
         }
       />
 

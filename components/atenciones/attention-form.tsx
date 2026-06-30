@@ -36,6 +36,16 @@ export type ServiceOption = { id: number; name: string; price: number };
 type ServiceLine = { serviceId: number; name: string; price: number; quantity: number };
 type ProductLine = { productId: number; name: string; price: number; stock: number; quantity: number };
 
+export type AttentionInitial = {
+  petName: string;
+  ownerName: string;
+  notes: string;
+  serviceLines: ServiceLine[];
+  productLines: ProductLine[];
+  discountType: DiscountType;
+  discountValue: number;
+};
+
 export function AttentionForm({
   services,
   products,
@@ -48,6 +58,9 @@ export function AttentionForm({
   defaultPet,
   defaultVetId,
   appointmentId,
+  initial,
+  isEdit = false,
+  submitLabel = "Registrar atención",
 }: {
   services: ServiceOption[];
   products: ComboboxProduct[];
@@ -60,12 +73,21 @@ export function AttentionForm({
   defaultPet?: { id: number; name: string; tutorId: number; tutorName: string };
   defaultVetId?: number;
   appointmentId?: number;
+  initial?: AttentionInitial;
+  isEdit?: boolean;
+  submitLabel?: string;
 }) {
   const [state, formAction] = useActionState<ActionState, FormData>(action, {});
-  const [serviceLines, setServiceLines] = useState<ServiceLine[]>([]);
-  const [productLines, setProductLines] = useState<ProductLine[]>([]);
-  const [discountType, setDiscountType] = useState<DiscountType>("amount");
-  const [discountValue, setDiscountValue] = useState(0);
+  const [serviceLines, setServiceLines] = useState<ServiceLine[]>(
+    initial?.serviceLines ?? []
+  );
+  const [productLines, setProductLines] = useState<ProductLine[]>(
+    initial?.productLines ?? []
+  );
+  const [discountType, setDiscountType] = useState<DiscountType>(
+    initial?.discountType ?? "amount"
+  );
+  const [discountValue, setDiscountValue] = useState(initial?.discountValue ?? 0);
   const [paid, setPaid] = useState(false);
 
   const subtotal =
@@ -126,11 +148,23 @@ export function AttentionForm({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <Label htmlFor="petName">Mascota</Label>
-              <Input id="petName" name="petName" placeholder="Ej: Firulais" required />
+              <Input
+                id="petName"
+                name="petName"
+                placeholder="Ej: Firulais"
+                defaultValue={initial?.petName}
+                required
+              />
             </div>
             <div>
               <Label htmlFor="ownerName">Dueño/a</Label>
-              <Input id="ownerName" name="ownerName" placeholder="Ej: María Pérez" required />
+              <Input
+                id="ownerName"
+                name="ownerName"
+                placeholder="Ej: María Pérez"
+                defaultValue={initial?.ownerName}
+                required
+              />
             </div>
           </div>
         )}
@@ -144,6 +178,7 @@ export function AttentionForm({
             id="notes"
             name="notes"
             placeholder="Diagnóstico, indicaciones, próximos controles…"
+            defaultValue={initial?.notes}
           />
         </div>
         {mode === "completo" && (
@@ -257,29 +292,33 @@ export function AttentionForm({
           </span>
         </div>
 
-        <label className="flex items-center gap-3 border-t border-gray-100 pt-3">
-          <input
-            type="checkbox"
-            name="paid"
-            checked={paid}
-            onChange={(e) => setPaid(e.target.checked)}
-            className="h-4 w-4"
-          />
-          <span className="text-sm font-medium text-gray-700">
-            Pagado ({formatCurrency(total)})
-          </span>
-        </label>
-        {paid && (
-          <div>
-            <Label htmlFor="paymentMethod">Medio de pago</Label>
-            <Select id="paymentMethod" name="paymentMethod" defaultValue="efectivo">
-              {PAYMENT_METHODS.map((m) => (
-                <option key={m} value={m}>
-                  {PAYMENT_METHOD_LABELS[m]}
-                </option>
-              ))}
-            </Select>
-          </div>
+        {!isEdit && (
+          <>
+            <label className="flex items-center gap-3 border-t border-gray-100 pt-3">
+              <input
+                type="checkbox"
+                name="paid"
+                checked={paid}
+                onChange={(e) => setPaid(e.target.checked)}
+                className="h-4 w-4"
+              />
+              <span className="text-sm font-medium text-gray-700">
+                Pagado ({formatCurrency(total)})
+              </span>
+            </label>
+            {paid && (
+              <div>
+                <Label htmlFor="paymentMethod">Medio de pago</Label>
+                <Select id="paymentMethod" name="paymentMethod" defaultValue="efectivo">
+                  {PAYMENT_METHODS.map((m) => (
+                    <option key={m} value={m}>
+                      {PAYMENT_METHOD_LABELS[m]}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            )}
+          </>
         )}
       </Card>
 
@@ -288,7 +327,7 @@ export function AttentionForm({
         <input type="hidden" name="appointmentId" value={appointmentId} />
       )}
       <FormError message={state.error} />
-      <SubmitButton className="w-full sm:w-auto">Registrar atención</SubmitButton>
+      <SubmitButton className="w-full sm:w-auto">{submitLabel}</SubmitButton>
     </form>
   );
 }
