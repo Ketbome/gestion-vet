@@ -62,6 +62,12 @@ node scripts/seed-demo.mjs
 
 Activa el modo completo y carga datos ficticios, incluido un veterinario de prueba (**usuario `drarojas` / clave `vet123`**). Es idempotente: no duplica lo ya existente.
 
+Para una demo completa en una base aparte (`data/demo.db`, no toca la tuya), con ~6 meses de historia, hospitalización, pedidos y reportes:
+
+```bash
+npm run demo   # recrea data/demo.db y levanta http://localhost:3200 (usuarios admin, crojas, recepcion… clave demo123)
+```
+
 ## 🐳 Desplegar con Docker
 
 Todas las variables se leen **en runtime**: la misma imagen sirve para cualquier configuración, y cambiar un valor solo requiere reiniciar el contenedor (no rebuildear).
