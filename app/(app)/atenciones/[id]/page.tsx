@@ -95,7 +95,7 @@ export default async function AtencionPage({
     .select({
       id: prescriptions.id,
       date: prescriptions.date,
-      count: sql<number>`(select count(*) from ${prescriptionItems} where ${prescriptionItems.prescriptionId} = ${prescriptions.id})`,
+      count: sql<number>`(select count(*) from ${prescriptionItems} where ${prescriptionItems.prescriptionId} = "prescriptions"."id")`,
     })
     .from(prescriptions)
     .where(eq(prescriptions.attentionId, attention.id))

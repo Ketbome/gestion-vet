@@ -37,7 +37,7 @@ export default async function ClientesPage({
       name: tutors.name,
       phone: tutors.phone,
       email: tutors.email,
-      petCount: sql<number>`(select count(*) from ${pets} where ${pets.tutorId} = ${tutors.id} and ${pets.active} = 1)`,
+      petCount: sql<number>`(select count(*) from ${pets} where ${pets.tutorId} = "tutors"."id" and ${pets.active} = 1)`,
     })
     .from(tutors)
     .where(and(...conditions))
